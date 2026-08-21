@@ -1,0 +1,8 @@
+{
+  "name": "Video to ASL",
+  "nodes": [],
+  "connections": [],
+  "active": false,
+  "settings": {},
+  "meta": { "description": "Video -> STT -> Gemini gloss -> backend ASL mapping" }
+}

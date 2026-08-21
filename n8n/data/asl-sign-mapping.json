@@ -1,0 +1,4 @@
+{
+  "sourceOfTruth": "backend/src/data/aslSigns.json",
+  "note": "Do not duplicate sign mappings in n8n."
+}

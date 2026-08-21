@@ -1,0 +1,10 @@
+{
+	"HELLO": { "type": "video", "path": "/asl/hello.mp4" },
+	"WELCOME": { "type": "video", "path": "/asl/welcome.mp4" },
+	"THANK YOU": { "type": "video", "path": "/asl/thank_you.mp4" },
+	"STUDENT": { "type": "video", "path": "/asl/student.mp4" },
+	"TEACHER": { "type": "video", "path": "/asl/teacher.mp4" },
+	"CLASS": { "type": "video", "path": "/asl/class.mp4" },
+	"COMPUTER": { "type": "video", "path": "/asl/computer.mp4" },
+	"SCIENCE": { "type": "video", "path": "/asl/science.mp4" }
+}

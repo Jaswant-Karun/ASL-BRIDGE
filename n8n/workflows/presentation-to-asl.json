@@ -1,0 +1,8 @@
+{
+  "name": "Presentation to ASL",
+  "nodes": [],
+  "connections": [],
+  "active": false,
+  "settings": {},
+  "meta": { "description": "Presentation text -> Gemini gloss -> backend ASL mapping" }
+}

@@ -1,0 +1,1 @@
+Convert English into an ASL-oriented gloss for an accessibility MVP. Preserve meaning, remove unnecessary grammatical words where appropriate, use uppercase tokens, and return valid JSON only.

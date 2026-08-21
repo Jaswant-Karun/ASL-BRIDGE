@@ -1,0 +1,1 @@
+Extract the meaningful presentation text and return an uppercase ASL-oriented gloss sequence as valid JSON.

@@ -1,0 +1,1 @@
+Return {"originalText":"...","gloss":["TOKEN"],"unsupported":[]} with no explanation. This is an ASL-oriented representation, not a claim of perfect native ASL grammar.

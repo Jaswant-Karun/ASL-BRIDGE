@@ -1,0 +1,107 @@
+{
+  "id": "asl-bridge-project-text-translation",
+  "name": "ASL Bridge - Project Text Translation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asl-bridge/project-text",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "asl-project-webhook",
+      "name": "ASL Bridge Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "asl-bridge-project-text"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = String($json.body?.text || $json.text || '').trim();\nif (!text) throw new Error('text is required');\nreturn [{ json: { originalText: text } }];"
+      },
+      "id": "asl-project-normalize",
+      "name": "Normalize English",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { contents: [{ parts: [{ text: 'You convert English into an ASL-oriented gloss for a hackathon accessibility MVP. Understand context, remove unnecessary grammar, preserve meaning, use uppercase sign tokens, and return valid JSON only in this exact shape: {\\\"gloss\\\":[\\\"WELCOME\\\"]}. Do not explain. English: ' + $json.originalText }] }] } }}",
+        "options": {}
+      },
+      "id": "asl-project-gemini",
+      "name": "Generate ASL Gloss",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalText = $items('Normalize English')[0].json.originalText;\nconst raw = $json.candidates?.[0]?.content?.parts?.[0]?.text || '{\"gloss\":[]}';\nconst parsed = JSON.parse(raw.replace(/^```json\\s*|\\s*```$/g, '').trim());\nconst gloss = Array.isArray(parsed.gloss) ? parsed.gloss.map((token) => String(token).toUpperCase()) : [];\nreturn [{ json: { originalText, gloss } }];"
+      },
+      "id": "asl-project-parse",
+      "name": "Validate Gloss JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.BACKEND_API_URL}}/asl/map",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { gloss: $json.gloss } }}",
+        "options": {}
+      },
+      "id": "asl-project-map",
+      "name": "Map Available Signs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const originalText = $items('Normalize English')[0].json.originalText;\nreturn [{ json: { originalText, ...$json } }];"
+      },
+      "id": "asl-project-result",
+      "name": "Build ASL Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1260, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "asl-project-response",
+      "name": "Return Translation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1500, 0]
+    }
+  ],
+  "connections": {
+    "ASL Bridge Input": { "main": [[{ "node": "Normalize English", "type": "main", "index": 0 }]] },
+    "Normalize English": { "main": [[{ "node": "Generate ASL Gloss", "type": "main", "index": 0 }]] },
+    "Generate ASL Gloss": { "main": [[{ "node": "Validate Gloss JSON", "type": "main", "index": 0 }]] },
+    "Validate Gloss JSON": { "main": [[{ "node": "Map Available Signs", "type": "main", "index": 0 }]] },
+    "Map Available Signs": { "main": [[{ "node": "Build ASL Response", "type": "main", "index": 0 }]] },
+    "Build ASL Response": { "main": [[{ "node": "Return Translation", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "asl-bridge-project-text-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "description": "ASL Bridge project workflow: English text to Gemini gloss to backend sign mapping"
+  }
+}
