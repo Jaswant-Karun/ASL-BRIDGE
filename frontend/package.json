@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "jszip": "latest",
     "react": "latest",
-    "react-dom": "latest"
-    ,"jszip": "latest"
-  },
-  "devDependencies": {}
+    "react-dom": "latest",
+    "three": "^0.185.1",
+    "vite": "latest"
+  }
 }

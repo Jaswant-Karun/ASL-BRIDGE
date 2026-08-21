@@ -1,0 +1,102 @@
+{
+  "id": "asl-bridge-text-to-animatediff",
+  "name": "ASL Bridge - Text to AnimateDiff Avatar Video",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asl/animatediff",
+        "responseMode": "responseNode"
+      },
+      "id": "animatediff-webhook",
+      "name": "Receive Text & Avatar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "asl-bridge-animatediff"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = String($json.body?.text || $json.text || '').trim();\nconst avatarId = String($json.body?.avatarId || $json.avatarId || 'sarah').toLowerCase();\nif (!text) throw new Error('text is required');\nreturn [{ json: { text, avatarId } }];"
+      },
+      "id": "prepare-animatediff-input",
+      "name": "Prepare Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { contents: [{ parts: [{ text: 'Convert this English sentence into an ASL-oriented uppercase gloss sequence. Return JSON only with a gloss array and no explanation. Text: ' + $json.text }] }] } }}",
+        "options": {}
+      },
+      "id": "gemini-animatediff-gloss",
+      "name": "Gemini Gloss",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.candidates?.[0]?.content?.parts?.[0]?.text || '{\"gloss\":[]}';\nconst cleaned = raw.replace(/^```json\\s*|\\s*```$/g, '').trim();\nconst parsed = JSON.parse(cleaned);\nconst gloss = (parsed.gloss || []).map((token) => String(token).toUpperCase());\nreturn [{ json: { text: $('Prepare Input').first().json.text, avatarId: $('Prepare Input').first().json.avatarId, gloss } }];"
+      },
+      "id": "parse-animatediff-gloss",
+      "name": "Parse Gloss & Form Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.BACKEND_API_URL}}/asl/animatediff/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "call-backend-animatediff",
+      "name": "Generate AnimateDiff Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-animatediff-result",
+      "name": "Return AnimateDiff Avatar Video",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1180, 0]
+    }
+  ],
+  "connections": {
+    "Receive Text & Avatar": {
+      "main": [[{ "node": "Prepare Input", "type": "main", "index": 0 }]]
+    },
+    "Prepare Input": {
+      "main": [[{ "node": "Gemini Gloss", "type": "main", "index": 0 }]]
+    },
+    "Gemini Gloss": {
+      "main": [[{ "node": "Parse Gloss & Form Request", "type": "main", "index": 0 }]]
+    },
+    "Parse Gloss & Form Request": {
+      "main": [[{ "node": "Generate AnimateDiff Video", "type": "main", "index": 0 }]]
+    },
+    "Generate AnimateDiff Video": {
+      "main": [[{ "node": "Return AnimateDiff Avatar Video", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "asl-bridge-animatediff-v1",
+  "meta": { "templateCredsSetupCompleted": true }
+}
