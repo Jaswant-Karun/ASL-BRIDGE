@@ -78,7 +78,14 @@ export default function AnimateDiffStudio({
 
   const videoRef = useRef(null);
 
-  const activeText = initialText || customStudioText || 'Welcome to our computer science class.';
+  useEffect(() => {
+    if (initialText !== undefined) {
+      setCustomStudioText(initialText);
+      setCurrentSignIndex(0);
+    }
+  }, [initialText]);
+
+  const activeText = initialText || customStudioText || '';
 
   useEffect(() => {
     getAvatars()
@@ -136,6 +143,8 @@ export default function AnimateDiffStudio({
     setCurrentSpokenWord('');
   };
 
+  const lastSpokenTextRef = useRef('');
+
   useEffect(() => {
     setCurrentSignIndex(0);
     if (videoRef.current) {
@@ -143,15 +152,21 @@ export default function AnimateDiffStudio({
       videoRef.current.play().catch(() => {});
     }
 
-    // Trigger synchronized voice if enabled
-    if (autoVoice && activeText) {
-      speakSentence(activeText);
+    const trimmed = (activeText || '').trim();
+    if (autoVoice && trimmed && gloss && gloss.length > 0) {
+      if (lastSpokenTextRef.current !== trimmed) {
+        lastSpokenTextRef.current = trimmed;
+        speakSentence(trimmed);
+      }
+    } else {
+      lastSpokenTextRef.current = '';
+      stopSpeaking();
     }
 
     return () => {
       stopSpeaking();
     };
-  }, [animations, gloss, studioResult, selectedAvatarId, activeText]);
+  }, [gloss?.length, studioResult, selectedAvatarId, activeText, autoVoice]);
 
   useEffect(() => {
     if (videoRef.current) {
