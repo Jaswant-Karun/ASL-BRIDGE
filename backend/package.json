@@ -12,6 +12,7 @@
     "dotenv": "latest",
     "express": "latest",
     "multer": "latest",
+    "adm-zip": "latest",
     "bcryptjs": "latest",
     "mongoose": "latest"
   }

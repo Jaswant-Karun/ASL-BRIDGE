@@ -1,4 +1,4 @@
-export default function Navbar({ navigate }) {
+export default function Navbar({ navigate, darkMode, onToggleTheme }) {
   return (
     <nav aria-label="Main navigation">
       <strong>ASL Bridge</strong>
@@ -7,6 +7,7 @@ export default function Navbar({ navigate }) {
       <button type="button" onClick={() => navigate?.('presentation')}>Presentation</button>
       <button type="button" onClick={() => navigate?.('about')}>About</button>
       <button type="button" onClick={() => navigate?.('signup')}>Sign up</button>
+      <button className="theme-toggle" type="button" onClick={onToggleTheme} aria-label="Toggle color theme">{darkMode ? '☼' : '◐'}</button>
     </nav>
   );
 }

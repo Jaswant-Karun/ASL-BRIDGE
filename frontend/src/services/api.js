@@ -13,3 +13,10 @@ export async function translateText(text) {
   if (!response.ok) throw new Error(result.error || 'Translation failed.');
   return result;
 }
+
+export async function processPresentation(file) {
+  const response = await fetch(`${API_URL}/presentation/process`, { method: 'POST', body: (() => { const data = new FormData(); data.append('presentation', file); return data; })() });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Presentation processing failed.');
+  return result;
+}

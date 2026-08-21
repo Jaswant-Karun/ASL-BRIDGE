@@ -19,3 +19,15 @@ export async function signup(request, response, next) {
     return next(error);
   }
 }
+
+export async function signin(request, response, next) {
+  try {
+    const email = String(request.body?.email || '').trim().toLowerCase();
+    const password = String(request.body?.password || '');
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) return response.status(401).json({ error: 'Email or password is incorrect.' });
+    return response.json({ user: { id: user.id, name: user.name, email: user.email } });
+  } catch (error) {
+    return next(error);
+  }
+}
