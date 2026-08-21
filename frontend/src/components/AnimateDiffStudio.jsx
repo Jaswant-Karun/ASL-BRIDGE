@@ -69,7 +69,7 @@ export default function AnimateDiffStudio({
   const [isGenerating, setIsGenerating] = useState(false);
   const [customStudioText, setCustomStudioText] = useState(initialText || '');
   const [studioResult, setStudioResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('3d_avatar'); // '3d_avatar' | 'diffusion_video' | 'linguistics' | 'avatars'
+  const [activeTab, setActiveTab] = useState('diffusion_video'); // 'diffusion_video' | '3d_avatar' | 'linguistics' | 'avatars'
 
   // Real-time Voice & Caption Sync State
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -256,17 +256,17 @@ export default function AnimateDiffStudio({
         <div className="studio-tabs">
           <button
             type="button"
-            className={activeTab === '3d_avatar' ? 'tab-btn active' : 'tab-btn'}
-            onClick={() => setActiveTab('3d_avatar')}
-          >
-            🤖 3D Skeletal Avatar
-          </button>
-          <button
-            type="button"
             className={activeTab === 'diffusion_video' ? 'tab-btn active' : 'tab-btn'}
             onClick={() => setActiveTab('diffusion_video')}
           >
-            🎥 AnimateDiff Video
+            🎥 3D Cartoon Avatar (Motion)
+          </button>
+          <button
+            type="button"
+            className={activeTab === '3d_avatar' ? 'tab-btn active' : 'tab-btn'}
+            onClick={() => setActiveTab('3d_avatar')}
+          >
+            🤖 Skeletal Rig View
           </button>
           <button
             type="button"
@@ -280,7 +280,7 @@ export default function AnimateDiffStudio({
             className={activeTab === 'avatars' ? 'tab-btn active' : 'tab-btn'}
             onClick={() => setActiveTab('avatars')}
           >
-            👤 Avatars ({avatars.length})
+            👤 Personas ({avatars.length})
           </button>
         </div>
       </div>

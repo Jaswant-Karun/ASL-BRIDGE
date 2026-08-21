@@ -3,9 +3,9 @@ import * as THREE from 'three';
 
 /**
  * AnimateDiff 3D Cartoon Motion Video Engine
- * High-quality 60 FPS stylized 3D Cartoon Avatar in continuous signing action.
- * Features talking cartoon mouth with lip-sync, blinking expressive eyes,
- * prominent upper-body ASL signing gestures, and studio lighting.
+ * 60 FPS stylized digital human avatar in continuous signing action.
+ * Features sentence-driven 3D Head Gestures, 3D Body/Torso Sway,
+ * 5-finger articulated 3D Hand Gestures, and resting idle pose on stop.
  */
 export default function AnimateDiffMotionVideoEngine({
   avatar = {
@@ -49,11 +49,11 @@ export default function AnimateDiffMotionVideoEngine({
     const width = container.clientWidth || 640;
     const height = container.clientHeight || 440;
 
-    // 1. Scene
+    // 1. Three.js Scene
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // 2. Camera
+    // 2. Perspective Camera
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
     camera.position.set(0, 0.38, 2.05);
     cameraRef.current = camera;
@@ -64,27 +64,33 @@ export default function AnimateDiffMotionVideoEngine({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0x0a1818, 1);
+    renderer.setClearColor(0x060e1c, 1);
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // 4. Vibrant Cartoon Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // 4. Studio Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
-    const mainKeyLight = new THREE.DirectionalLight(0xfff7ed, 1.5);
+    const mainKeyLight = new THREE.DirectionalLight(0xfff7ed, 1.6);
     mainKeyLight.position.set(2.0, 3.5, 2.5);
     mainKeyLight.castShadow = true;
     mainKeyLight.shadow.mapSize.width = 1024;
     mainKeyLight.shadow.mapSize.height = 1024;
     scene.add(mainKeyLight);
 
-    const fillLight = new THREE.DirectionalLight(0xbae6fd, 0.9);
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
     fillLight.position.set(-2.5, 2.0, 2.0);
     scene.add(fillLight);
 
     const rimColor =
-      avatar.id === 'alex' ? 0x38bdf8 : avatar.id === 'maya' ? 0xf472b6 : avatar.id === 'marcus' ? 0x34d399 : 0xfb923c;
+      avatar.id === 'alex'
+        ? 0x38bdf8
+        : avatar.id === 'maya'
+        ? 0xec4899
+        : avatar.id === 'marcus'
+        ? 0x10b981
+        : 0xe26d4d;
 
     const rimLight = new THREE.DirectionalLight(rimColor, 1.4);
     rimLight.position.set(0, 3.0, -2.5);
@@ -93,7 +99,7 @@ export default function AnimateDiffMotionVideoEngine({
     // Floor shadow catcher
     const floorGeo = new THREE.PlaneGeometry(10, 10);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x061010,
+      color: 0x040810,
       roughness: 0.8
     });
     const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -102,38 +108,30 @@ export default function AnimateDiffMotionVideoEngine({
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // 5. Build 3D Cartoon Avatar
-    const character = buildCartoonAvatar(scene, avatar);
-    characterRef.current = character;
+    // 5. Build 3D Cartoon Avatar Model
+    const charModel = buildCartoonAvatar(scene, avatar);
+    characterRef.current = charModel;
 
-    // 6. Interactive Orbit & Drag
+    // 6. Interactive 360 Drag Orbit Controls
+    const dom = renderer.domElement;
     const onMouseDown = (e) => {
       isDraggingRef.current = true;
       prevMouseRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const onMouseMove = (e) => {
-      if (!isDraggingRef.current || !characterRef.current?.root) return;
+      if (!isDraggingRef.current || !characterRef.current) return;
       const deltaX = e.clientX - prevMouseRef.current.x;
       const deltaY = e.clientY - prevMouseRef.current.y;
-
-      characterRef.current.root.rotation.y += deltaX * 0.007;
-      characterRef.current.root.rotation.x = Math.max(
-        -0.25,
-        Math.min(0.25, characterRef.current.root.rotation.x + deltaY * 0.004)
-      );
-
       prevMouseRef.current = { x: e.clientX, y: e.clientY };
+
+      characterRef.current.root.rotation.y += deltaX * 0.008;
+      camera.position.y = Math.max(0.1, Math.min(0.8, camera.position.y - deltaY * 0.003));
     };
 
     const onMouseUp = () => {
       isDraggingRef.current = false;
     };
-
-    const dom = renderer.domElement;
-    dom.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
 
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
@@ -143,10 +141,13 @@ export default function AnimateDiffMotionVideoEngine({
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
+
+    dom.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('resize', handleResize);
 
     return () => {
-      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
       dom.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
@@ -177,26 +178,45 @@ export default function AnimateDiffMotionVideoEngine({
     const animateLoop = () => {
       animFrameIdRef.current = requestAnimationFrame(animateLoop);
 
-      if (isPlaying && characterRef.current) {
-        frameClock = (frameClock + playbackRate * 0.75) % totalFrames;
-        const currentFrameInt = Math.floor(frameClock);
-        setCurrentFrameNum(currentFrameInt);
+      if (characterRef.current) {
+        const isActivelySigning = isPlaying || isSpeaking;
 
-        // Find active sign in motion sequence
-        const currentUnit = motionUnits.find(
-          (u) => currentFrameInt >= u.startFrame && currentFrameInt <= u.endFrame
-        ) || motionUnits[0];
+        if (isActivelySigning) {
+          frameClock = (frameClock + playbackRate * 0.8) % Math.max(1, totalFrames);
+          const currentFrameInt = Math.floor(frameClock);
+          setCurrentFrameNum(currentFrameInt);
 
-        // Animate the Cartoon Avatar with full gestures & talking mouth
-        updateCartoonAvatar(
-          characterRef.current,
-          currentUnit,
-          currentFrameInt,
-          isSpeaking,
-          frameClock,
-          showSkeleton,
-          activeSign?.token
-        );
+          // Find active sign in motion sequence
+          const currentUnit =
+            motionUnits.find(
+              (u) => currentFrameInt >= u.startFrame && currentFrameInt <= u.endFrame
+            ) || motionUnits[0];
+
+          // Animate the Cartoon Avatar with full sentence-responsive gestures
+          updateCartoonAvatarMotion(
+            characterRef.current,
+            currentUnit,
+            currentFrameInt,
+            isSpeaking,
+            frameClock,
+            showSkeleton,
+            activeSign?.token,
+            true
+          );
+        } else {
+          // Stopped / Idle Neutral Pose
+          frameClock += 0.02;
+          updateCartoonAvatarMotion(
+            characterRef.current,
+            null,
+            0,
+            false,
+            frameClock,
+            showSkeleton,
+            null,
+            false
+          );
+        }
       }
 
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -255,7 +275,7 @@ export default function AnimateDiffMotionVideoEngine({
 
         <div className="telemetry-tag">
           <span className="live-pulse"></span>
-          3D CARTOON MOTION ENGINE (60 FPS)
+          3D CONTINUOUS MOTION ENGINE (60 FPS)
         </div>
       </div>
     </div>
@@ -313,10 +333,10 @@ function buildCartoonAvatar(scene, avatar) {
   const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const irisMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
   const highlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const mouthMat = new THREE.MeshBasicMaterial({ color: 0xc2410c });
+  const mouthMat = new THREE.MeshBasicMaterial({ color: 0x881337 });
   const teethMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-  // 1. Cartoon Torso & Hoodie
+  // 1. Torso Group
   const torsoGroup = new THREE.Group();
   const torsoGeo = new THREE.CylinderGeometry(0.25, 0.22, 0.55, 24);
   const torso = new THREE.Mesh(torsoGeo, clothMaterial);
@@ -343,7 +363,6 @@ function buildCartoonAvatar(scene, avatar) {
   const headGroup = new THREE.Group();
   headGroup.position.set(0, 0.51, 0);
 
-  // Head base (smooth rounded cartoon head)
   const headGeo = new THREE.SphereGeometry(0.165, 32, 32);
   headGeo.scale(1.0, 1.18, 1.05);
   const head = new THREE.Mesh(headGeo, skinMaterial);
@@ -380,7 +399,7 @@ function buildCartoonAvatar(scene, avatar) {
   }
   headGroup.add(hairGroup);
 
-  // 4. Big Expressive Cartoon Eyes (with pupils and glossy catchlights)
+  // 4. Big Expressive Cartoon Eyes
   const leftEyeGroup = new THREE.Group();
   leftEyeGroup.position.set(-0.058, 0.03, 0.145);
 
@@ -406,7 +425,7 @@ function buildCartoonAvatar(scene, avatar) {
   rightEyeGroup.position.set(0.058, 0.03, 0.145);
   headGroup.add(rightEyeGroup);
 
-  // 5. Cartoon Eyebrows (Dynamic ASL Grammar Elevation)
+  // 5. Cartoon Eyebrows (Dynamic ASL Grammar)
   const browGeo = new THREE.BoxGeometry(0.055, 0.014, 0.025);
   const leftEyebrow = new THREE.Mesh(browGeo, hairMaterial);
   leftEyebrow.position.set(-0.058, 0.085, 0.142);
@@ -434,7 +453,7 @@ function buildCartoonAvatar(scene, avatar) {
   headGroup.add(mouthGroup);
   root.add(headGroup);
 
-  // 7. Right Arm & Expressive Cartoon Hand (Active ASL Signing Arm)
+  // 7. Right Arm & 5-Finger Hand (Dominant ASL Signing Arm)
   const rShoulder = new THREE.Group();
   rShoulder.position.set(0.28, 0.22, 0);
 
@@ -456,14 +475,12 @@ function buildCartoonAvatar(scene, avatar) {
   const rWrist = new THREE.Group();
   rWrist.position.set(0, -0.26, 0);
 
-  // Cartoon Hand Palm
   const palmGeo = new THREE.BoxGeometry(0.08, 0.09, 0.028);
   palmGeo.translate(0, -0.045, 0);
   const rPalm = new THREE.Mesh(palmGeo, skinMaterial);
   rPalm.castShadow = true;
   rWrist.add(rPalm);
 
-  // 5 Articulated Cartoon Fingers
   const rFingers = [];
   const fingerOffsets = [-0.028, -0.01, 0.01, 0.028, 0.042];
   for (let f = 0; f < 5; f++) {
@@ -484,7 +501,7 @@ function buildCartoonAvatar(scene, avatar) {
   rShoulder.add(rElbow);
   root.add(rShoulder);
 
-  // 8. Left Arm & Expressive Cartoon Hand
+  // 8. Left Arm & 5-Finger Hand
   const lShoulder = new THREE.Group();
   lShoulder.position.set(-0.28, 0.22, 0);
 
@@ -548,68 +565,123 @@ function buildCartoonAvatar(scene, avatar) {
 }
 
 /**
- * 60 FPS Dynamic Motion & Speech Solver
+ * 60 FPS Sentence-Responsive Motion Solver (Head + Body + Hands + Idle Pose)
  */
-function updateCartoonAvatar(
+function updateCartoonAvatarMotion(
   char,
   unit,
   frameInt,
   isSpeaking,
   clock,
   showSkeleton,
-  currentWordToken
+  currentWordToken,
+  isActiveSigning = true
 ) {
+  if (!isActiveSigning) {
+    // ==========================================
+    // 1. IDLE / STOPPED POSE (Smooth Resting)
+    // ==========================================
+    // Calm breathing
+    char.torso.position.y = Math.sin(clock * 0.04) * 0.008;
+    char.torso.rotation.set(0, 0, 0);
+
+    // Relaxed neutral head
+    char.head.rotation.set(Math.sin(clock * 0.03) * 0.015, Math.cos(clock * 0.02) * 0.02, 0);
+
+    // Mouth closed in calm gentle posture
+    char.mouth.scale.set(0.9, 0.25, 0.6);
+    char.mouth.position.y = -0.07;
+
+    // Eyebrows neutral
+    char.leftEyebrow.position.y = 0.085;
+    char.rightEyebrow.position.y = 0.085;
+
+    // Natural eye blink every few seconds
+    const isBlink = Math.sin(clock * 0.03) > 0.97;
+    char.leftEye.scale.y = isBlink ? 0.1 : 1.0;
+    char.rightEye.scale.y = isBlink ? 0.1 : 1.0;
+
+    // Arms resting naturally at sides
+    char.rShoulder.rotation.set(0.12, 0.05, 0.15);
+    char.rElbow.rotation.set(0.25, 0, 0);
+    char.rWrist.rotation.set(0.08, 0, 0);
+
+    char.lShoulder.rotation.set(0.12, -0.05, -0.15);
+    char.lElbow.rotation.set(0.25, 0, 0);
+    char.lWrist.rotation.set(0.08, 0, 0);
+
+    // Fingers relaxed
+    if (char.rFingers) {
+      char.rFingers.forEach((f) => {
+        f.rotation.x = 0.2;
+      });
+    }
+    if (char.lFingers) {
+      char.lFingers.forEach((f) => {
+        f.rotation.x = 0.2;
+      });
+    }
+    return;
+  }
+
+  // ==========================================
+  // 2. ACTIVE SIGNING & SPEAKING MOTION
+  // ==========================================
   const localFrame = frameInt - (unit?.startFrame || 0);
   const duration = unit?.durationFrames || 24;
   const progress = Math.max(0, Math.min(1, localFrame / duration));
   const smoothT = Math.sin(progress * Math.PI * 0.5);
 
-  // 1. Lively Cartoon Breathing & Bounce
-  char.torso.position.y = Math.sin(clock * 0.06) * 0.014;
-  char.torso.rotation.z = Math.sin(clock * 0.04) * 0.02;
+  // A. Dynamic Body Gestures (Torso Sway, Spine Flexion, Breathing Bounce)
+  const bodySwayX = Math.sin(clock * 0.09) * 0.022;
+  const bodySwayZ = Math.cos(clock * 0.07) * 0.018;
+  char.torso.position.y = Math.sin(clock * 0.08) * 0.016;
+  char.torso.rotation.x = bodySwayX * 0.8;
+  char.torso.rotation.z = bodySwayZ * 0.9;
 
-  // 2. Animated Talking Lip-Sync & Jaw Open-Close
-  if (isSpeaking) {
-    const speechScale = 0.3 + Math.abs(Math.sin(clock * 0.5)) * 1.6;
-    const widthScale = 1.0 + Math.sin(clock * 0.35) * 0.4;
-    char.mouth.scale.set(widthScale, speechScale, 1.2);
-    char.mouth.position.y = -0.07 - speechScale * 0.01;
+  // B. Dynamic Head Gestures (Nods, Grammatical Tilts & Speech Visemes)
+  const headNod = Math.sin(clock * 0.14) * 0.06;
+  const headTurn = Math.cos(clock * 0.08) * 0.05;
+
+  if (unit?.headMotion) {
+    char.head.rotation.x = (unit.headMotion.pitch || 0) * Math.sin(progress * Math.PI) + headNod;
+    char.head.rotation.y = (unit.headMotion.yaw || 0) * Math.sin(progress * Math.PI) + headTurn;
   } else {
-    // Relaxed friendly smile
+    char.head.rotation.x = headNod;
+    char.head.rotation.y = headTurn;
+  }
+
+  // Talking Mouth Lip-Sync Visemes
+  if (isSpeaking) {
+    const mouthOpen = 0.4 + Math.abs(Math.sin(clock * 0.6)) * 1.6;
+    const mouthWidth = 1.0 + Math.sin(clock * 0.4) * 0.35;
+    char.mouth.scale.set(mouthWidth, mouthOpen, 1.2);
+    char.mouth.position.y = -0.07 - mouthOpen * 0.01;
+  } else {
     char.mouth.scale.set(1.0, 0.4, 0.8);
     char.mouth.position.y = -0.07;
   }
 
-  // 3. Natural Eye Blinking & Gaze
+  // Eye Blinks
   const isBlinking = Math.sin(clock * 0.04) > 0.96;
   char.leftEye.scale.y = isBlinking ? 0.1 : 1.0;
   char.rightEye.scale.y = isBlinking ? 0.1 : 1.0;
 
-  // 4. Cartoon Eyebrow Grammar
-  const eyebrowLift = unit?.eyebrows || 0;
-  char.leftEyebrow.position.y = 0.085 + eyebrowLift * 0.04 + Math.sin(clock * 0.05) * 0.005;
-  char.rightEyebrow.position.y = 0.085 + eyebrowLift * 0.04 + Math.sin(clock * 0.05) * 0.005;
+  // Eyebrow ASL Grammar Elevation
+  const eyebrowLift = unit?.eyebrows || (Math.sin(clock * 0.1) > 0.4 ? 0.6 : 0.1);
+  char.leftEyebrow.position.y = 0.085 + eyebrowLift * 0.035;
+  char.rightEyebrow.position.y = 0.085 + eyebrowLift * 0.035;
 
-  // 5. Head Motion & Nods
-  if (unit?.headMotion) {
-    char.head.rotation.x = (unit.headMotion.pitch || 0) * Math.sin(progress * Math.PI) + Math.sin(clock * 0.06) * 0.04;
-    char.head.rotation.y = (unit.headMotion.yaw || 0) * Math.sin(progress * Math.PI) + Math.sin(clock * 0.03) * 0.05;
-  } else {
-    char.head.rotation.x = Math.sin(clock * 0.06) * 0.04;
-    char.head.rotation.y = Math.sin(clock * 0.03) * 0.05;
-  }
-
-  // 6. Right (Dominant) Arm ASL Signing Action in Front of Chest/Face
+  // C. Dynamic 3D Hand Gestures & Arm Kinematics (Dominant & Non-Dominant Hands)
   if (unit?.rightArmKeyframes && unit.rightArmKeyframes.length > 0) {
     const k0 = unit.rightArmKeyframes[0];
     const k1 = unit.rightArmKeyframes[unit.rightArmKeyframes.length - 1] || k0;
 
-    // Bring arm up into active signing space
-    char.rShoulder.rotation.x = THREE.MathUtils.lerp(k0.shoulder[0] + 0.4, k1.shoulder[0] + 0.4, smoothT);
-    char.rShoulder.rotation.y = THREE.MathUtils.lerp(k0.shoulder[1] + 0.2, k1.shoulder[1] + 0.2, smoothT);
-    char.rShoulder.rotation.z = THREE.MathUtils.lerp(k0.shoulder[2] + 0.3, k1.shoulder[2] + 0.3, smoothT);
+    char.rShoulder.rotation.x = THREE.MathUtils.lerp(k0.shoulder[0] + 0.45, k1.shoulder[0] + 0.45, smoothT);
+    char.rShoulder.rotation.y = THREE.MathUtils.lerp(k0.shoulder[1] + 0.25, k1.shoulder[1] + 0.25, smoothT);
+    char.rShoulder.rotation.z = THREE.MathUtils.lerp(k0.shoulder[2] + 0.35, k1.shoulder[2] + 0.35, smoothT);
 
-    char.rElbow.rotation.x = THREE.MathUtils.lerp(k0.elbow[0] + 0.6, k1.elbow[0] + 0.6, smoothT);
+    char.rElbow.rotation.x = THREE.MathUtils.lerp(k0.elbow[0] + 0.7, k1.elbow[0] + 0.7, smoothT);
     char.rElbow.rotation.y = THREE.MathUtils.lerp(k0.elbow[1], k1.elbow[1], smoothT);
     char.rElbow.rotation.z = THREE.MathUtils.lerp(k0.elbow[2], k1.elbow[2], smoothT);
 
@@ -617,30 +689,25 @@ function updateCartoonAvatar(
     char.rWrist.rotation.y = THREE.MathUtils.lerp(k0.wrist[1], k1.wrist[1], smoothT);
     char.rWrist.rotation.z = THREE.MathUtils.lerp(k0.wrist[2], k1.wrist[2], smoothT);
   } else {
-    // Dynamic ASL signing posture for any custom token / names (e.g. Jashwan, Karan, etc.)
-    const signSway = Math.sin(clock * 0.12);
-    char.rShoulder.rotation.x = 0.65 + signSway * 0.25;
-    char.rShoulder.rotation.y = 0.35 + Math.cos(clock * 0.1) * 0.2;
-    char.rShoulder.rotation.z = 0.45;
+    // Active front-of-chest ASL signing space gesture
+    const signSwing = Math.sin(clock * 0.15);
+    const signReach = Math.cos(clock * 0.12);
 
-    char.rElbow.rotation.x = 1.35 + Math.sin(clock * 0.15) * 0.3;
-    char.rElbow.rotation.y = 0.3;
-    char.rElbow.rotation.z = 0.4;
-
-    char.rWrist.rotation.x = 0.35 + Math.cos(clock * 0.12) * 0.25;
-    char.rWrist.rotation.z = 0.5 + Math.sin(clock * 0.18) * 0.3;
+    char.rShoulder.rotation.set(0.7 + signSwing * 0.25, 0.4 + signReach * 0.18, 0.4);
+    char.rElbow.rotation.set(1.4 + Math.sin(clock * 0.18) * 0.35, 0.3, 0.35);
+    char.rWrist.rotation.set(0.4 + Math.cos(clock * 0.16) * 0.3, 0.2, 0.5 + Math.sin(clock * 0.2) * 0.35);
   }
 
-  // 7. Left (Non-Dominant) Arm ASL Signing Action
+  // Left Arm ASL Action
   if (unit?.leftArmKeyframes && unit.leftArmKeyframes.length > 0) {
     const lk0 = unit.leftArmKeyframes[0];
     const lk1 = unit.leftArmKeyframes[unit.leftArmKeyframes.length - 1] || lk0;
 
-    char.lShoulder.rotation.x = THREE.MathUtils.lerp(lk0.shoulder[0] + 0.35, lk1.shoulder[0] + 0.35, smoothT);
-    char.lShoulder.rotation.y = THREE.MathUtils.lerp(lk0.shoulder[1] - 0.2, lk1.shoulder[1] - 0.2, smoothT);
-    char.lShoulder.rotation.z = THREE.MathUtils.lerp(lk0.shoulder[2] - 0.3, lk1.shoulder[2] - 0.3, smoothT);
+    char.lShoulder.rotation.x = THREE.MathUtils.lerp(lk0.shoulder[0] + 0.4, lk1.shoulder[0] + 0.4, smoothT);
+    char.lShoulder.rotation.y = THREE.MathUtils.lerp(lk0.shoulder[1] - 0.25, lk1.shoulder[1] - 0.25, smoothT);
+    char.lShoulder.rotation.z = THREE.MathUtils.lerp(lk0.shoulder[2] - 0.35, lk1.shoulder[2] - 0.35, smoothT);
 
-    char.lElbow.rotation.x = THREE.MathUtils.lerp(lk0.elbow[0] + 0.5, lk1.elbow[0] + 0.5, smoothT);
+    char.lElbow.rotation.x = THREE.MathUtils.lerp(lk0.elbow[0] + 0.6, lk1.elbow[0] + 0.6, smoothT);
     char.lElbow.rotation.y = THREE.MathUtils.lerp(lk0.elbow[1], lk1.elbow[1], smoothT);
     char.lElbow.rotation.z = THREE.MathUtils.lerp(lk0.elbow[2], lk1.elbow[2], smoothT);
 
@@ -648,17 +715,17 @@ function updateCartoonAvatar(
     char.lWrist.rotation.y = THREE.MathUtils.lerp(lk0.wrist[1], lk1.wrist[1], smoothT);
     char.lWrist.rotation.z = THREE.MathUtils.lerp(lk0.wrist[2], lk1.wrist[2], smoothT);
   } else {
-    // Natural supporting posture in signing space
-    char.lShoulder.rotation.set(0.3 + Math.sin(clock * 0.05) * 0.1, -0.2, -0.2);
-    char.lElbow.rotation.set(0.6 + Math.cos(clock * 0.05) * 0.1, 0, 0);
-    char.lWrist.rotation.set(0.2, 0, -0.2);
+    // Natural supporting arm movement in chest volume
+    char.lShoulder.rotation.set(0.45 + Math.sin(clock * 0.08) * 0.15, -0.3, -0.3);
+    char.lElbow.rotation.set(0.85 + Math.cos(clock * 0.1) * 0.2, 0.1, -0.15);
+    char.lWrist.rotation.set(0.3, 0, -0.25);
   }
 
-  // 8. Dynamic Cartoon Finger Articulation
+  // D. 5-Finger Articulation
   if (char.rFingers) {
     const fingers = ['thumb', 'index', 'middle', 'ring', 'pinky'];
     for (let f = 0; f < 5; f++) {
-      const curl = unit?.handshape?.[fingers[f]]?.[0] || (Math.sin(clock * 0.15 + f) > 0 ? 0.7 : 0.1);
+      const curl = unit?.handshape?.[fingers[f]]?.[0] ?? (Math.sin(clock * 0.18 + f * 0.8) > 0 ? 0.75 : 0.15);
       if (char.rFingers[f]) {
         char.rFingers[f].rotation.x = curl * (Math.PI * 0.5);
       }
@@ -668,12 +735,12 @@ function updateCartoonAvatar(
   if (char.lFingers) {
     for (let f = 0; f < 5; f++) {
       if (char.lFingers[f]) {
-        char.lFingers[f].rotation.x = 0.2 + Math.sin(clock * 0.08 + f) * 0.15;
+        char.lFingers[f].rotation.x = 0.25 + Math.sin(clock * 0.12 + f * 0.6) * 0.2;
       }
     }
   }
 
-  // 9. Skeleton Mode Toggle
+  // Skeleton Rig
   if (char.skinMaterial && char.clothMaterial) {
     char.skinMaterial.wireframe = showSkeleton;
     char.clothMaterial.wireframe = showSkeleton;
