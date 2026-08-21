@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
 import { translateText } from '../services/api';
-import ASLPlayer from '../components/ASLPlayer';
-import ActivityChart from '../components/ActivityChart';
+import AnimateDiffStudio from '../components/AnimateDiffStudio';
+import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
 
-export default function Home({ navigate, user, darkMode, onToggleTheme }) {
-  const [text, setText] = useState('Welcome to our computer science class.');
-  const [avatarId, setAvatarId] = useState('sarah');
+export default function Home({ navigate, user }) {
+  const [text, setText] = useState('Tomorrow I am going to college because I have an important project review.');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function submit(event) {
     if (event) event.preventDefault();
+    if (!text.trim()) return;
     setLoading(true);
     setError('');
     try {
-      const translation = await translateText(text, avatarId);
+      const translation = await translateText(text.trim());
       setResult(translation);
     } catch (translationError) {
       setError(translationError.message);
@@ -25,95 +24,103 @@ export default function Home({ navigate, user, darkMode, onToggleTheme }) {
     }
   }
 
+  const activeSentence = result?.originalText || text;
+
   return (
-    <>
-      <Navbar navigate={navigate} darkMode={darkMode} onToggleTheme={onToggleTheme} />
-      <main>
-        <p className="eyebrow">YOUR ACCESSIBILITY WORKSPACE</p>
-        <h1>Good to see you{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.</h1>
-        <p className="dashboard-intro">
-          Synthesize high-fidelity ASL video animations using AnimateDiff motion diffusion and avatar personas.
-        </p>
-
-        {/* Feature Mode Grid */}
-        <div className="mode-grid">
-          <button type="button" onClick={() => document.getElementById('translation-text')?.focus()}>
-            <span className="mode-icon">✨</span>
-            <strong>AnimateDiff Avatar Studio</strong>
-            <small>Turn written text into realistic avatar sign videos</small>
-          </button>
-          <button type="button" onClick={() => navigate?.('live')}>
-            <span className="mode-icon">◉</span>
-            <strong>Live Translation</strong>
-            <small>Follow real-time speech with avatar signing</small>
-          </button>
-          <button type="button" onClick={() => navigate?.('presentation')}>
-            <span className="mode-icon">▣</span>
-            <strong>Presentation Mode</strong>
-            <small>Translate PowerPoint slides with avatar</small>
-          </button>
+    <div className="home-workspace-page">
+      <header className="page-header-banner">
+        <div className="banner-left">
+          <span className="rainbow-kicker">📝 TEXT TO ASL ANIMATEDIFF 3D STUDIO</span>
+          <h2>Text to ASL 3D Avatar Studio</h2>
+          <p>
+            Translate natural English text into continuous 3D cartoon avatar sign language sequences with talking lip-sync and synchronized spoken voice.
+          </p>
         </div>
+      </header>
 
-        <ActivityChart />
-
-        {/* Translation Input Section */}
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">ANIMATEDIFF TEXT TO ASL</p>
-            <h2>Synthesize Avatar Sign Video</h2>
-          </div>
-          <span className="status-pill">● AnimateDiff v3 Ready</span>
-        </div>
-
+      {/* Text Input Card */}
+      <section className="text-input-card">
         <form onSubmit={submit} className="translation-form">
-          <label htmlFor="translation-text">Enter English sentence to translate into sign video</label>
+          <div className="input-header-row">
+            <label htmlFor="translation-text">
+              Enter any English sentence (e.g. <em>Tomorrow I am going to college...</em>):
+            </label>
+            <span className="telemetry-pill">● AnimateDiff 3D Engine Active</span>
+          </div>
+
           <textarea
             id="translation-text"
             value={text}
             onChange={(event) => setText(event.target.value)}
             rows="3"
-            placeholder="Type a sentence (e.g. Welcome to our computer science class)..."
+            placeholder="Type any sentence..."
+            className="rainbow-textarea"
           />
 
           <div className="form-action-row">
-            <button type="submit" className="primary-action-btn" disabled={loading || !text.trim()}>
-              {loading ? '🎬 Generating AnimateDiff Video...' : '✨ Generate Avatar Sign Video'}
+            <button
+              type="submit"
+              className="rainbow-motion-btn primary-btn"
+              disabled={loading || !text.trim()}
+            >
+              <span>{loading ? '🎬 Synthesizing 3D Motion...' : '✨ Generate AnimateDiff 3D Sign Video'}</span>
             </button>
+
+            {/* Quick Sample Prompts */}
+            <div className="quick-samples-row">
+              <span className="sample-label">Try:</span>
+              <button
+                type="button"
+                className="sample-pill-btn"
+                onClick={() => {
+                  setText('Tomorrow I am going to college because I have an important project review.');
+                }}
+              >
+                Tomorrow College Review
+              </button>
+              <button
+                type="button"
+                className="sample-pill-btn"
+                onClick={() => {
+                  setText('Hello everyone, my name is Jashwan Karan.');
+                }}
+              >
+                Hello My Name Jashwan
+              </button>
+              <button
+                type="button"
+                className="sample-pill-btn"
+                onClick={() => {
+                  setText('Good morning what to do next to learn computer science.');
+                }}
+              >
+                Good Morning Computer Science
+              </button>
+            </div>
           </div>
         </form>
 
         {error && <p className="error-message" role="alert">{error}</p>}
+      </section>
 
-        {/* Translation Results & AnimateDiff Studio */}
-        {result && (
-          <section className="results-section" aria-label="Translation result">
-            <div className="results-header-card">
-              <div>
-                <span className="result-kicker">CAPTIONS & GLOSS SEQUENCE</span>
-                <p className="caption-text">"{result.originalText}"</p>
-                <div className="gloss-sequence-badges">
-                  {result.gloss.map((token, idx) => (
-                    <span key={`${token}-${idx}`} className="gloss-token-badge">
-                      {token}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+      {/* Integrated AnimateDiff 3D Studio (Directly inside Text to ASL) */}
+      <section className="integrated-animatediff-section">
+        <AnimateDiffStudio
+          initialText={activeSentence}
+          gloss={result?.gloss || ['TOMORROW', 'ME', 'COLLEGE', 'GO', 'WHY', 'ME', 'HAVE', 'IMPORTANT', 'PROJECT', 'REVIEW']}
+          animations={result?.animations || []}
+          unsupported={result?.unsupported || []}
+          motionPlan={result?.motionPlan || null}
+          linguisticStructure={result?.linguisticStructure || null}
+          nonManualMarkers={result?.nonManualMarkers || []}
+          animatediffData={result?.animatediff || null}
+        />
+      </section>
 
-            <ASLPlayer
-              text={result.originalText}
-              gloss={result.gloss}
-              animations={result.animations}
-              unsupported={result.unsupported}
-              motionPlan={result.motionPlan}
-              linguisticStructure={result.linguisticStructure}
-              nonManualMarkers={result.nonManualMarkers}
-              animatediff={result.animatediff}
-            />
-          </section>
-        )}
-      </main>
-    </>
+      {/* Rainbow Architecture Diagram Flow */}
+      <section className="pipeline-flow-section" style={{ marginTop: '2rem' }}>
+        <RainbowPipelineDiagram activeStep="avatar" />
+      </section>
+    </div>
   );
 }

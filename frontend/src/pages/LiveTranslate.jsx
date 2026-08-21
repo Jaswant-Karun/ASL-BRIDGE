@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
 import SpeechInput from '../components/SpeechInput';
 import { translateText } from '../services/api';
 import ASLPlayer from '../components/ASLPlayer';
 
-export default function LiveTranslate({ navigate, darkMode, onToggleTheme }) {
+export default function LiveTranslate({ navigate }) {
   const [text, setText] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -25,9 +24,7 @@ export default function LiveTranslate({ navigate, darkMode, onToggleTheme }) {
   }
 
   return (
-    <>
-      <Navbar navigate={navigate} darkMode={darkMode} onToggleTheme={onToggleTheme} />
-      <main>
+    <div className="live-translate-page">
         <p className="eyebrow">LIVE TRANSLATION</p>
         <h1>Make speech visible.</h1>
         <p className="dashboard-intro">
@@ -83,7 +80,6 @@ export default function LiveTranslate({ navigate, darkMode, onToggleTheme }) {
             />
           </section>
         )}
-      </main>
-    </>
+    </div>
   );
 }

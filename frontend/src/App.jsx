@@ -1,21 +1,96 @@
-import { useCallback, useState } from 'react';
-import About from './pages/About';
-import Home from './pages/Home';
-import LiveTranslate from './pages/LiveTranslate';
-import PresentationMode from './pages/PresentationMode';
-import Signup from './pages/Signup';
+import React, { useCallback, useState } from 'react';
+import Sidebar from './components/Sidebar';
 import LoadingPage from './pages/LoadingPage';
+import Signup from './pages/Signup';
+
+import Home from './pages/Home';
+import SpeechStudio from './pages/SpeechStudio';
+import LinguisticsPage from './pages/LinguisticsPage';
+import DictionaryPage from './pages/DictionaryPage';
+import AvatarCustomizerPage from './pages/AvatarCustomizerPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import PresentationMode from './pages/PresentationMode';
+import SettingsPage from './pages/SettingsPage';
+import About from './pages/About';
 
 export default function App() {
-  const [stage, setStage] = useState('loading');
+  const [stage, setStage] = useState('loading'); // 'loading' | 'auth' | 'dashboard'
   const [page, setPage] = useState('home');
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('asl-theme') === 'dark');
-  const [user, setUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('asl-theme') !== 'light');
+  const [user, setUser] = useState({ name: 'Jashwan Karan', email: 'jashwan@aslbridge.ai' });
+
   const finishLoading = useCallback(() => setStage('auth'), []);
-  function toggleTheme() { setDarkMode((value) => { const next = !value; localStorage.setItem('asl-theme', next ? 'dark' : 'light'); return next; }); }
-  if (stage === 'loading') return <LoadingPage onComplete={finishLoading} />;
-  if (stage === 'auth') return <Signup onAuthenticated={(account) => { setUser(account); setStage('dashboard'); }} darkMode={darkMode} onToggleTheme={toggleTheme} />;
-  const pages = { home: Home, live: LiveTranslate, presentation: PresentationMode, about: About };
-  const Page = pages[page] || Home;
-  return <div className={darkMode ? 'app dark' : 'app'}><Page navigate={setPage} user={user} darkMode={darkMode} onToggleTheme={toggleTheme} /></div>;
+
+  const toggleTheme = () => {
+    setDarkMode((val) => {
+      const next = !val;
+      localStorage.setItem('asl-theme', next ? 'dark' : 'light');
+      return next;
+    });
+  };
+
+  if (stage === 'loading') {
+    return <LoadingPage onComplete={finishLoading} />;
+  }
+
+  if (stage === 'auth') {
+    return (
+      <Signup
+        onAuthenticated={(account) => {
+          setUser(account);
+          setStage('dashboard');
+        }}
+        onGuestMode={() => {
+          setUser({ name: 'Studio Guest', email: 'guest@aslbridge.ai' });
+          setStage('dashboard');
+        }}
+      />
+    );
+  }
+
+  const renderCurrentPage = () => {
+    switch (page) {
+      case 'home':
+        return <Home navigate={setPage} user={user} darkMode={darkMode} onToggleTheme={toggleTheme} />;
+      case 'speech':
+        return <SpeechStudio navigate={setPage} user={user} />;
+      case 'linguistics':
+        return <LinguisticsPage />;
+      case 'dictionary':
+        return <DictionaryPage />;
+      case 'avatars':
+        return <AvatarCustomizerPage />;
+      case 'analytics':
+        return <AnalyticsPage />;
+      case 'presentation':
+        return <PresentationMode navigate={setPage} user={user} />;
+      case 'settings':
+        return <SettingsPage darkMode={darkMode} onToggleTheme={toggleTheme} />;
+      case 'about':
+        return <About navigate={setPage} />;
+      default:
+        return <Home navigate={setPage} user={user} darkMode={darkMode} onToggleTheme={toggleTheme} />;
+    }
+  };
+
+  return (
+    <div className={`app-root ${darkMode ? 'dark-theme' : 'light-theme'}`}>
+      <div className="app-layout-container">
+        {/* Left Sidebar Navigation */}
+        <Sidebar
+          currentPage={page}
+          navigate={setPage}
+          user={user}
+          onSignOut={() => setStage('auth')}
+          darkMode={darkMode}
+          onToggleTheme={toggleTheme}
+        />
+
+        {/* Main Dashboard Content Viewport */}
+        <main className="app-main-viewport">
+          {renderCurrentPage()}
+        </main>
+      </div>
+    </div>
+  );
 }
