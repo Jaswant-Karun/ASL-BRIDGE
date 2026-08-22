@@ -1,5 +1,9 @@
 import signs from '../data/aslSigns.json' with { type: 'json' };
-import { mapGlossToAnimations } from '../services/aslService.js';
+import {
+  mapGlossToAnimations,
+  mapTextToDatasetGestures,
+  ASL_DATASET_CHARACTERS
+} from '../services/aslService.js';
 import { buildAnimateDiffPlan } from '../services/animatediffService.js';
 import { translateEnglishToASL } from '../services/aslTranslationService.js';
 import { synthesizeSentenceMotion, SIGN_MOTION_LIBRARY } from '../services/motionService.js';
@@ -38,6 +42,9 @@ export async function translateText(request, response, next) {
     const mapped = mapGlossToAnimations(signs, gloss);
     const animatediffPlan = buildAnimateDiffPlan(gloss, avatarId);
 
+    // 4. Real ASL Dataset Image Recognition & Gesture Mapping (Letters + Words)
+    const datasetGestures = mapTextToDatasetGestures(originalText, gloss);
+
     return response.json({
       originalText,
       gloss,
@@ -47,6 +54,7 @@ export async function translateText(request, response, next) {
       animations: mapped.animations.map(({ path }) => path),
       unsupported: mapped.unsupported,
       motionPlan,
+      datasetGestures,
       animatediff: {
         avatar: animatediffPlan.avatar,
         config: animatediffPlan.config,
@@ -82,4 +90,28 @@ export function mapSigns(request, response) {
   const mapped = mapGlossToAnimations(signs, gloss);
   response.json({ gloss, animations: mapped.animations.map(({ path }) => path), unsupported: mapped.unsupported });
 }
+
+export function getDatasetLibrary(_request, response) {
+  const characters = Object.values(ASL_DATASET_CHARACTERS).map((item) => {
+    const lower = item.char.toLowerCase();
+    return {
+      ...item,
+      lowerChar: lower,
+      imageUrl: `/dataset-image/${lower}`,
+      sampleUrls: [
+        `/dataset-image/${lower}?sample=0`,
+        `/dataset-image/${lower}?sample=1`,
+        `/dataset-image/${lower}?sample=2`,
+        `/dataset-image/${lower}?sample=3`
+      ]
+    };
+  });
+
+  return response.json({
+
+    totalCharacters: characters.length,
+    characters
+  });
+}
+
 

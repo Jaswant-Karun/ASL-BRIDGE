@@ -1,8 +1,138 @@
+# ==============================================================================
+# ASL-Bridge - Git Ignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Dependencies & Package Managers
+# ------------------------------------------------------------------------------
 node_modules/
+*/node_modules/
+package-lock.json.bak
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# Build & Output Artifacts
+# ------------------------------------------------------------------------------
 dist/
+dist-ssr/
+build/
+out/
+.vite/
+*.local
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Secrets (Keep .env.example safe)
+# ------------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
+n8n/.env
+n8n/.env.*
+backend/.env
+frontend/.env
+*.pem
+*.key
+*.cert
+
+# ------------------------------------------------------------------------------
+# Python & Virtual Environments (AnimateDiff & ML scripts)
+# ------------------------------------------------------------------------------
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ------------------------------------------------------------------------------
+# Backend Uploads, Generated Media & Temp Files
+# ------------------------------------------------------------------------------
 backend/uploads/*
 !backend/uploads/.gitkeep
-n8n/.env
+backend/outputs/*
+!backend/outputs/.gitkeep
+backend/temp/
+temp/
+tmp/
+
+# ------------------------------------------------------------------------------
+# Large Machine Learning Models & Weights
+# ------------------------------------------------------------------------------
+*.ckpt
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.onnx
+*.weights
+
+# ------------------------------------------------------------------------------
+# n8n Local Workflow Engine Data
+# ------------------------------------------------------------------------------
+.n8n/
+n8n/.n8n/
+n8n/local-files/
+
+# ------------------------------------------------------------------------------
+# Logs & Databases
+# ------------------------------------------------------------------------------
+logs/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# ------------------------------------------------------------------------------
+# Operating System & Editor Metadata
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Editors & IDEs
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# Temporary Raw Data & Antigravity/Gemini IDE Caches
+# ------------------------------------------------------------------------------
+American/
+.agents/
+.gemini/

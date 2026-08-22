@@ -358,7 +358,9 @@ export default function SpeechStudio() {
           linguisticStructure={translationResult?.linguisticStructure || null}
           nonManualMarkers={translationResult?.nonManualMarkers || []}
           animatediffData={translationResult?.animatediff || null}
+          datasetGestures={translationResult?.datasetGestures || null}
         />
+
       </section>
 
       {/* Rainbow Architecture Diagram */}

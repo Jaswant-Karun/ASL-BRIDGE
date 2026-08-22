@@ -4,6 +4,7 @@ import Avatar3DCanvas from './Avatar3DCanvas';
 import AnimateDiffMotionVideoEngine from './AnimateDiffMotionVideoEngine';
 import AnimateDiffVideoSynthesizer from './AnimateDiffVideoSynthesizer';
 import LiveCaptionBanner from './LiveCaptionBanner';
+import ASLGestureDatasetViewer from './ASLGestureDatasetViewer';
 import { avatarSpeech } from '../utils/speechSynthesis';
 
 const DEFAULT_AVATARS = [
@@ -58,6 +59,7 @@ export default function AnimateDiffStudio({
   linguisticStructure = null,
   nonManualMarkers = [],
   animatediffData = null,
+  datasetGestures = null,
   onAvatarChange = null
 }) {
   const [avatars, setAvatars] = useState(DEFAULT_AVATARS);
@@ -69,7 +71,8 @@ export default function AnimateDiffStudio({
   const [isGenerating, setIsGenerating] = useState(false);
   const [customStudioText, setCustomStudioText] = useState(initialText || '');
   const [studioResult, setStudioResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('diffusion_video'); // 'diffusion_video' | '3d_avatar' | 'linguistics' | 'avatars'
+  const [activeTab, setActiveTab] = useState('diffusion_video'); // 'diffusion_video' | 'asl_dataset' | '3d_avatar' | 'linguistics' | 'avatars'
+
 
   // Real-time Voice & Caption Sync State
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -263,6 +266,13 @@ export default function AnimateDiffStudio({
           </button>
           <button
             type="button"
+            className={activeTab === 'asl_dataset' ? 'tab-btn active highlight-tab' : 'tab-btn highlight-tab'}
+            onClick={() => setActiveTab('asl_dataset')}
+          >
+            🖐️ ASL Dataset Signs (Letters & Words)
+          </button>
+          <button
+            type="button"
             className={activeTab === '3d_avatar' ? 'tab-btn active' : 'tab-btn'}
             onClick={() => setActiveTab('3d_avatar')}
           >
@@ -284,6 +294,7 @@ export default function AnimateDiffStudio({
           </button>
         </div>
       </div>
+
 
       {/* Avatar Persona Quick Picker & Voice Controls */}
       <div className="avatar-picker-bar">
@@ -439,7 +450,19 @@ export default function AnimateDiffStudio({
             avatar={selectedAvatar}
           />
 
+          {activeTab === 'asl_dataset' && (
+            <ASLGestureDatasetViewer
+              text={activeText}
+              gloss={gloss}
+              datasetData={studioResult?.datasetGestures || datasetGestures}
+              isSpeaking={isSpeaking}
+              currentSpokenWord={currentSpokenWord}
+              activeSignIndex={currentSignIndex}
+            />
+          )}
+
           {activeTab === 'linguistics' && (
+
             <div className="linguistics-card-view">
               <h4>Linguistic Syntax & Non-Manual Marker Analysis</h4>
               <div className="linguistic-pill-grid">

@@ -114,7 +114,9 @@ export default function Home({ navigate, user }) {
           linguisticStructure={result?.linguisticStructure || null}
           nonManualMarkers={result?.nonManualMarkers || []}
           animatediffData={result?.animatediff || null}
+          datasetGestures={result?.datasetGestures || null}
         />
+
       </section>
 
       {/* Rainbow Architecture Diagram Flow */}

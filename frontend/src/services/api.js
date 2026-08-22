@@ -66,3 +66,12 @@ export async function processPresentation(file) {
   return result;
 }
 
+export async function getDatasetLibrary() {
+  const response = await fetch(`${API_URL}/asl/dataset`);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Failed to load ASL dataset.');
+  return result;
+}
+
+
+

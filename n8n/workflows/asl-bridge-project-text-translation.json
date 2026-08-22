@@ -29,21 +29,33 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{$env.GEMINI_API_KEY}}",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AQ.Ab8RN6J_x7m6crmsexfwNi88cGis4pkc70SY6yPTxVP6rjyi5Q",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { contents: [{ parts: [{ text: 'You convert English into an ASL-oriented gloss for a hackathon accessibility MVP. Understand context, remove unnecessary grammar, preserve meaning, use uppercase sign tokens, and return valid JSON only in this exact shape: {\\\"gloss\\\":[\\\"WELCOME\\\"]}. Do not explain. English: ' + $json.originalText }] }] } }}",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: 'You convert English into an ASL-oriented gloss for a hackathon accessibility MVP. Understand context, remove unnecessary grammar, preserve meaning, use uppercase sign tokens, and return valid JSON only in this exact shape: {\"gloss\":[\"WELCOME\"]}. Do not explain. English: ' + $json.originalText }] }] }) }}",
         "options": {}
       },
       "id": "asl-project-gemini",
       "name": "Generate ASL Gloss",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [500, 0]
+      "position": [500, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
     },
     {
       "parameters": {
-        "jsCode": "const originalText = $items('Normalize English')[0].json.originalText;\nconst raw = $json.candidates?.[0]?.content?.parts?.[0]?.text || '{\"gloss\":[]}';\nconst parsed = JSON.parse(raw.replace(/^```json\\s*|\\s*```$/g, '').trim());\nconst gloss = Array.isArray(parsed.gloss) ? parsed.gloss.map((token) => String(token).toUpperCase()) : [];\nreturn [{ json: { originalText, gloss } }];"
+        "jsCode": "const originalText = $items('Normalize English')[0].json.originalText;\nlet gloss = [];\ntry {\n  const raw = $json.candidates?.[0]?.content?.parts?.[0]?.text || '';\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    const parsed = JSON.parse(match[0]);\n    if (Array.isArray(parsed.gloss)) {\n      gloss = parsed.gloss.map((token) => String(token).toUpperCase().trim());\n    }\n  }\n} catch (e) {\n  const fallback = String($json.candidates?.[0]?.content?.parts?.[0]?.text || '')\n    .replace(/[^a-zA-Z0-9\\s]/g, ' ')\n    .split(/\\s+/)\n    .filter(Boolean)\n    .map(t => t.toUpperCase());\n  gloss = fallback;\n}\n\nif (!gloss.length) {\n  gloss = originalText.toUpperCase().split(/\\s+/).filter(Boolean);\n}\n\nreturn [{ json: { originalText, gloss } }];"
       },
       "id": "asl-project-parse",
       "name": "Validate Gloss JSON",
@@ -54,10 +66,19 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.BACKEND_API_URL}}/asl/map",
+        "url": "http://localhost:5000/api/asl/map",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { gloss: $json.gloss } }}",
+        "jsonBody": "={{ JSON.stringify({ gloss: $json.gloss }) }}",
         "options": {}
       },
       "id": "asl-project-map",
@@ -99,7 +120,7 @@
   },
   "active": false,
   "settings": {},
-  "versionId": "asl-bridge-project-text-v1",
+  "versionId": "asl-bridge-project-text-v2",
   "meta": {
     "templateCredsSetupCompleted": true,
     "description": "ASL Bridge project workflow: English text to Gemini gloss to backend sign mapping"

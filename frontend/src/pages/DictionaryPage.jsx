@@ -103,7 +103,7 @@ export default function DictionaryPage() {
             <span className="live-status-tag">60 FPS 3D KINEMATICS</span>
           </div>
 
-          <div className="preview-canvas-wrapper">
+          <div className="preview-canvas-wrapper" style={{ display: 'grid', gridTemplateColumns: selectedSign.length === 1 ? '1fr 180px' : '1fr', gap: '1rem' }}>
             <AnimateDiffMotionVideoEngine
               avatar={{
                 id: 'alex',
@@ -114,22 +114,40 @@ export default function DictionaryPage() {
               activeSign={{ token: selectedSign }}
               isPlaying={true}
             />
+
+            {selectedSign.length === 1 && (
+              <div className="dataset-reference-box" style={{ background: '#071220', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '12px', padding: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 'bold' }}>DATASET GESTURE</span>
+                <img
+                  src={`/dataset-image/${selectedSign.toLowerCase()}`}
+                  alt={`ASL dataset gesture for ${selectedSign}`}
+                  style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)' }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `/dataset-image/${selectedSign.toLowerCase()}`;
+                  }}
+                />
+                <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold' }}>Letter '{selectedSign}'</span>
+              </div>
+            )}
+
           </div>
 
           <div className="sign-kinematics-info">
             <div className="info-stat">
               <span>Sign Class</span>
-              <strong>Parametric ASL Unit</strong>
+              <strong>{selectedSign.length === 1 ? 'Dataset Alphabet Gesture' : 'Parametric ASL Unit'}</strong>
             </div>
             <div className="info-stat">
               <span>Hand Articulation</span>
               <strong>5-Finger IK Spline</strong>
             </div>
             <div className="info-stat">
-              <span>Coarticulation</span>
-              <strong>Hermite Blending Active</strong>
+              <span>Dataset Source</span>
+              <strong>Dataset/American/{selectedSign.toLowerCase()}</strong>
             </div>
           </div>
+
         </div>
       </div>
     </div>
