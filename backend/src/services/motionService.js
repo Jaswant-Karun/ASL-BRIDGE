@@ -16,6 +16,25 @@ export const HANDSHAPES = {
   Y_SHAPE: { thumb: [0, 0], index: [1, 1, 1], middle: [1, 1, 1], ring: [1, 1, 1], pinky: [0, 0, 0] }
 };
 
+const DATASET_HANDSHAPE_BY_CHAR = {
+  a: HANDSHAPES.A_FIST, b: HANDSHAPES.OPEN_B, c: HANDSHAPES.C_SHAPE,
+  d: HANDSHAPES.ONE_D, e: HANDSHAPES.FLAT_O, f: HANDSHAPES.FLAT_O,
+  g: HANDSHAPES.ONE_D, h: HANDSHAPES.OPEN_B, i: HANDSHAPES.Y_SHAPE,
+  j: HANDSHAPES.Y_SHAPE, k: HANDSHAPES.ONE_D, l: HANDSHAPES.ONE_D,
+  m: HANDSHAPES.A_FIST, n: HANDSHAPES.A_FIST, o: HANDSHAPES.FLAT_O,
+  p: HANDSHAPES.ONE_D, q: HANDSHAPES.ONE_D, r: HANDSHAPES.ONE_D,
+  s: HANDSHAPES.S_FIST, t: HANDSHAPES.A_FIST, u: HANDSHAPES.OPEN_B,
+  v: HANDSHAPES.OPEN_B, w: HANDSHAPES.OPEN_B, x: HANDSHAPES.ONE_D,
+  y: HANDSHAPES.Y_SHAPE, z: HANDSHAPES.ONE_D,
+  0: HANDSHAPES.FLAT_O, 1: HANDSHAPES.ONE_D, 2: HANDSHAPES.OPEN_B,
+  3: HANDSHAPES.OPEN_B, 4: HANDSHAPES.OPEN_B, 5: HANDSHAPES.OPEN_5,
+  6: HANDSHAPES.FLAT_O, 7: HANDSHAPES.FLAT_O, 8: HANDSHAPES.FLAT_O, 9: HANDSHAPES.FLAT_O
+};
+
+function getDatasetHandshape(character) {
+  return DATASET_HANDSHAPE_BY_CHAR[String(character || '').toLowerCase()] || null;
+}
+
 // 3D Motion Kinematics for ASL Sign Units
 export const SIGN_MOTION_LIBRARY = {
   TOMORROW: {
@@ -186,13 +205,19 @@ export function generateFingerspellingMotion(word = '') {
  * Compose continuous skeletal motion track across a sequence of sign tokens
  * with coarticulation and kinematic blending.
  */
-export function synthesizeSentenceMotion(glossSequence = [], fps = 30) {
+export function synthesizeSentenceMotion(glossSequence = [], fps = 30, datasetGestures = null) {
   const motionUnits = [];
   let currentFrameOffset = 0;
+  const datasetLetters = datasetGestures?.flatGestureStream || [];
+  const sequence = datasetLetters.length > 0
+    ? datasetLetters.map((gesture) => ({ token: gesture.char, gesture }))
+    : glossSequence.map((token) => ({ token, gesture: null }));
 
-  for (let i = 0; i < glossSequence.length; i++) {
-    const token = String(glossSequence[i]).toUpperCase().trim();
+  for (let i = 0; i < sequence.length; i++) {
+    const token = String(sequence[i].token).toUpperCase().trim();
+    const datasetGesture = sequence[i].gesture;
     const signUnit = SIGN_MOTION_LIBRARY[token] || generateFingerspellingMotion(token);
+    const handshape = getDatasetHandshape(datasetGesture?.lowerChar) || signUnit.handshape;
 
     motionUnits.push({
       index: i + 1,
@@ -202,11 +227,13 @@ export function synthesizeSentenceMotion(glossSequence = [], fps = 30) {
       endFrame: currentFrameOffset + signUnit.durationFrames,
       startTimeSec: (currentFrameOffset / fps).toFixed(2),
       endTimeSec: ((currentFrameOffset + signUnit.durationFrames) / fps).toFixed(2),
-      handshape: signUnit.handshape,
+      handshape,
+      fingerHandshapes: [handshape],
       rightArmKeyframes: signUnit.rightArm,
       leftArmKeyframes: signUnit.leftArm,
       headMotion: signUnit.headMotion,
       eyebrows: signUnit.eyebrows,
+      datasetGesture,
       isCoreSign: Boolean(SIGN_MOTION_LIBRARY[token])
     });
 

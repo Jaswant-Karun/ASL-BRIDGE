@@ -7,6 +7,7 @@ import {
 import { buildAnimateDiffPlan } from '../services/animatediffService.js';
 import { translateEnglishToASL } from '../services/aslTranslationService.js';
 import { synthesizeSentenceMotion, SIGN_MOTION_LIBRARY } from '../services/motionService.js';
+import { predictGesture } from '../services/localModelService.js';
 
 export async function translateText(request, response, next) {
   try {
@@ -18,8 +19,8 @@ export async function translateText(request, response, next) {
     const linguisticResult = translateEnglishToASL(originalText);
     let gloss = linguisticResult.glossSequence;
 
-    // Optional n8n orchestration hook
-    if (process.env.N8N_WEBHOOK_URL) {
+    // Optional external orchestration; local translation remains the default.
+    if (process.env.N8N_ENABLED === 'true' && process.env.N8N_WEBHOOK_URL) {
       try {
         const n8nResponse = await fetch(process.env.N8N_WEBHOOK_URL, {
           method: 'POST',
@@ -35,16 +36,17 @@ export async function translateText(request, response, next) {
       }
     }
 
+    // Build the dataset mapping before motion so the renderer receives the exact reference sample.
+    const datasetGestures = mapTextToDatasetGestures(originalText, gloss);
+
     // 2. Sign Motion Generation: Synthesize continuous 3D skeletal frames & coarticulation
-    const motionPlan = synthesizeSentenceMotion(gloss);
+    const motionPlan = synthesizeSentenceMotion(gloss, 30, datasetGestures);
 
     // 3. Asset mapping & AnimateDiff Motion Plan
     const mapped = mapGlossToAnimations(signs, gloss);
     const animatediffPlan = buildAnimateDiffPlan(gloss, avatarId);
 
     // 4. Real ASL Dataset Image Recognition & Gesture Mapping (Letters + Words)
-    const datasetGestures = mapTextToDatasetGestures(originalText, gloss);
-
     return response.json({
       originalText,
       gloss,
@@ -72,8 +74,19 @@ export function synthesizeMotion(request, response, next) {
     const gloss = Array.isArray(request.body?.gloss)
       ? request.body.gloss.map((t) => String(t).toUpperCase())
       : [];
-    const motionPlan = synthesizeSentenceMotion(gloss);
+    const datasetGestures = mapTextToDatasetGestures('', gloss);
+    const motionPlan = synthesizeSentenceMotion(gloss, 30, datasetGestures);
     return response.json(motionPlan);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function predictDatasetGesture(request, response, next) {
+  try {
+    if (!request.file) return response.status(400).json({ error: 'A gesture image is required.' });
+    const result = await predictGesture(request.file.buffer, request.file.originalname);
+    return response.json({ ...result, model: 'local-knn', dataset: 'Dataset/American' });
   } catch (error) {
     return next(error);
   }
