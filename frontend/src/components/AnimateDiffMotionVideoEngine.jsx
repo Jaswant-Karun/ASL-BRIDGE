@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 /**
  * AnimateDiff 3D Cartoon Motion Video Engine
@@ -35,6 +36,7 @@ export default function AnimateDiffMotionVideoEngine({
   const rendererRef = useRef(null);
   const cameraRef = useRef(null);
   const characterRef = useRef(null);
+  const gltfModelRef = useRef(null);
   const animFrameIdRef = useRef(null);
 
   const isDraggingRef = useRef(false);
@@ -117,6 +119,23 @@ export default function AnimateDiffMotionVideoEngine({
     // 5. Build 3D Cartoon Avatar Model
     const charModel = buildCartoonAvatar(scene, avatar);
     characterRef.current = charModel;
+    const modelUrl = avatar.modelUrl || import.meta.env.VITE_AVATAR_GLB_URL;
+    if (modelUrl) {
+      const loader = new GLTFLoader();
+      loader.load(modelUrl, (gltf) => {
+        if (!container.isConnected) return;
+        gltf.scene.traverse((object) => {
+          if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; }
+        });
+        gltf.scene.position.set(0, -1.02, 0);
+        gltf.scene.scale.setScalar(avatar.modelScale || 1);
+        scene.add(gltf.scene);
+        gltfModelRef.current = gltf.scene;
+        charModel.root.visible = false;
+      }, undefined, (loadError) => {
+        console.warn(`GLB avatar unavailable; using procedural avatar fallback: ${loadError.message}`);
+      });
+    }
 
     // 6. Interactive 360 Drag Orbit Controls
     const dom = renderer.domElement;
@@ -163,6 +182,15 @@ export default function AnimateDiffMotionVideoEngine({
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
+      if (gltfModelRef.current) {
+        gltfModelRef.current.traverse((object) => {
+          object.geometry?.dispose();
+          if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
+          else object.material?.dispose();
+        });
+        scene.remove(gltfModelRef.current);
+        gltfModelRef.current = null;
+      }
     };
   }, [avatar.id]);
 
@@ -210,6 +238,7 @@ export default function AnimateDiffMotionVideoEngine({
             activeSign?.token,
             true
           );
+          updateRiggedAvatarMotion(gltfModelRef.current, activeMotionUnit, currentFrameNum);
         } else {
           // Stopped / Idle Neutral Pose
           frameClock += 0.02;
@@ -818,4 +847,26 @@ function updateCartoonAvatarMotion(
     char.skinMaterial.wireframe = showSkeleton;
     char.clothMaterial.wireframe = showSkeleton;
   }
+}
+
+function updateRiggedAvatarMotion(model, unit, frame) {
+  if (!model) return;
+  const progress = unit?.startFrame !== undefined && unit?.endFrame > unit.startFrame
+    ? THREE.MathUtils.clamp((frame - unit.startFrame) / (unit.endFrame - unit.startFrame), 0, 1)
+    : 0;
+  const swing = Math.sin(progress * Math.PI) * 0.35;
+  model.traverse((object) => {
+    if (!object.isBone) return;
+    const name = object.name.toLowerCase();
+    const isRight = /right|_r\b|\.r\b/.test(name);
+    const isLeft = /left|_l\b|\.l\b/.test(name);
+    const side = isRight ? 1 : isLeft ? -1 : 0;
+    if (/shoulder|upperarm|clavicle/.test(name)) object.rotation.z = side * (0.18 + swing);
+    if (/forearm|lowerarm|elbow/.test(name)) object.rotation.x = 0.45 + swing * 0.4;
+    if (/wrist|hand/.test(name) && !/finger|thumb|index|middle|ring|pinky/.test(name)) object.rotation.y = side * swing * 0.35;
+    if (/thumb|index|middle|ring|pinky|finger/.test(name)) {
+      const curl = unit?.handshape?.[name.match(/thumb|index|middle|ring|pinky/)?.[0]]?.[0] || 0;
+      object.rotation.x = THREE.MathUtils.lerp(object.rotation.x, curl * 0.9, 0.16);
+    }
+  });
 }

@@ -18,19 +18,33 @@ export default function Sidebar({
 
   const mainWorkspaceItems = [
     { id: 'home', label: 'Text to ASL Studio', icon: '📝', tag: 'AnimateDiff' },
-    { id: 'speech', label: 'Speech to ASL (Rainbow)', icon: '🎤', tag: 'AnimateDiff' }
+    { id: 'speech', label: 'Speech to ASL (Rainbow)', icon: '🎤', tag: 'AnimateDiff' },
+    { id: 'camera', label: 'Live Camera ASL', icon: '📹', tag: 'Vision' },
+    { id: 'presentation', label: 'PPT to ASL Flow', icon: '📚', tag: 'Slides' },
+    { id: 'dictionary', label: 'ASL 3D Dictionary', icon: '🧠', tag: 'Library' },
+    { id: 'avatars', label: 'Avatar Training Lab', icon: '👥', tag: 'Rig' },
+    { id: 'maps', label: 'ASL Maps & Resources', icon: '🗺️', tag: 'Explore' }
   ];
 
   const linguisticsItems = [
     { id: 'linguistics', label: 'Rainbow Grammar & NMM', icon: '🌈', tag: 'Syntax' },
-    { id: 'dictionary', label: 'ASL 3D Dictionary', icon: '📚', tag: 'Library' },
-    { id: 'avatars', label: 'Cartoon Avatars', icon: '👥', tag: 'Wardrobe' }
+    { id: 'analytics', label: 'Rainbow Analytics', icon: '📊', tag: 'Metrics' },
+    { id: 'settings', label: 'Blue Theme & Options', icon: '⚙️', tag: 'Setup' },
+    { id: 'profile', label: 'Profile & Progress', icon: '👤', tag: 'User' },
+    { id: 'about', label: 'About ASL Bridge', icon: 'ℹ️', tag: 'Info' }
   ];
 
-  const preferencesItems = [
-    { id: 'analytics', label: 'Rainbow Analytics', icon: '📊', tag: 'Metrics' },
-    { id: 'presentation', label: 'Classroom Mode', icon: '🎓', tag: 'Fullscreen' },
-    { id: 'settings', label: 'Blue Theme & Options', icon: '⚙️', tag: 'Setup' }
+  const extrasItems = [
+    { id: 'training', label: 'Finger Training Lab', icon: '✋', tag: 'Learn' },
+    { id: 'realtime', label: 'Real-time Sign Monitor', icon: '⚡', tag: 'Live' },
+    { id: 'accessibility', label: 'Accessibility Tools', icon: '♿', tag: 'A11y' },
+    { id: 'translate', label: 'Translator Console', icon: '🔄', tag: 'AI' },
+    { id: 'audit', label: 'Gesture Audit', icon: '✅', tag: 'Review' },
+    { id: 'coach', label: 'ASL Coach', icon: '🏆', tag: 'Practice' },
+    { id: 'story', label: 'Storytelling Mode', icon: '📖', tag: 'Narrative' },
+    { id: 'classroom', label: 'Classroom Mode', icon: '🎓', tag: 'Teach' },
+    { id: 'feedback', label: 'Feedback Loop', icon: '💬', tag: 'Mentor' },
+    { id: 'capture', label: 'Gesture Capture', icon: '📸', tag: 'Record' }
   ];
 
   return (
@@ -96,8 +110,8 @@ export default function Sidebar({
           </button>
         ))}
 
-        {!isCollapsed && <span className="nav-section-title">PREFERENCES & TOOLS</span>}
-        {preferencesItems.map((item) => (
+        {!isCollapsed && <span className="nav-section-title">ADVANCED TOOLS</span>}
+        {extrasItems.map((item) => (
           <button
             key={item.id}
             type="button"

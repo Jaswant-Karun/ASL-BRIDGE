@@ -93,5 +93,14 @@ export async function synthesizeMotion(gloss) {
   return result;
 }
 
+export async function transcribeAudio(audioFile) {
+  const data = new FormData();
+  data.append('audio', audioFile);
+  const response = await fetch(`${API_URL}/speech/transcribe`, { method: 'POST', body: data });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Whisper transcription failed.');
+  return result;
+}
+
 
 

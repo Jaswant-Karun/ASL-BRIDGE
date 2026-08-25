@@ -1,10 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PresentationUpload from '../components/PresentationUpload';
 import ASLPlayer from '../components/ASLPlayer';
 
 export default function PresentationMode({ navigate }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [activeLine, setActiveLine] = useState(0);
+  const [isPlayingLines, setIsPlayingLines] = useState(false);
+
+  const lines = result?.lines || [];
+  const currentLine = lines[activeLine] || result;
+
+  useEffect(() => {
+    if (!isPlayingLines || lines.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveLine((value) => {
+        if (value >= lines.length - 1) {
+          setIsPlayingLines(false);
+          return 0;
+        }
+        return value + 1;
+      });
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [isPlayingLines, lines.length]);
 
   return (
     <div className="presentation-workspace-page">
@@ -17,6 +36,8 @@ export default function PresentationMode({ navigate }) {
       <PresentationUpload
         onResult={(value) => {
           setResult(value);
+          setActiveLine(0);
+          setIsPlayingLines(false);
           setError('');
         }}
         onError={setError}
@@ -29,11 +50,26 @@ export default function PresentationMode({ navigate }) {
           <section className="presentation-slide-pane">
             <p className="eyebrow">SLIDE EXTRACTED CONTENT</p>
             <h2>{result.fileName}</h2>
-            <div className="extracted-slide-text">
-              <p>{result.originalText || 'No readable slide text found.'}</p>
+            <button type="button" className="presentation-play-lines" onClick={() => setIsPlayingLines((value) => !value)} disabled={lines.length < 2}>
+              {isPlayingLines ? 'Pause line playback' : 'Play lines sequentially'}
+            </button>
+            <div className="presentation-line-list">
+              {lines.length > 0 ? lines.map((line, idx) => (
+                <button
+                  type="button"
+                  key={`${line.slideNumber}-${line.lineNumber}`}
+                  className={`presentation-line ${idx === activeLine ? 'active' : ''}`}
+                  onClick={() => setActiveLine(idx)}
+                >
+                  <span>Slide {line.slideNumber} / Line {line.lineNumber}</span>
+                  <strong>{line.text}</strong>
+                </button>
+              )) : (
+                <p>{result.originalText || 'No readable slide text found.'}</p>
+              )}
             </div>
             <div className="gloss-sequence-badges">
-              {result.gloss?.map((token, idx) => (
+              {currentLine?.gloss?.map((token, idx) => (
                 <span key={`${token}-${idx}`} className="gloss-token-badge">
                   {token}
                 </span>
@@ -43,10 +79,10 @@ export default function PresentationMode({ navigate }) {
 
           <section className="presentation-avatar-pane">
             <ASLPlayer
-              text={result.originalText}
-              gloss={result.gloss}
-              animations={result.animations}
-              unsupported={result.unsupported}
+              text={currentLine?.text || result.originalText}
+              gloss={currentLine?.gloss || result.gloss}
+              animations={currentLine?.animations || result.animations}
+              unsupported={currentLine?.unsupported || result.unsupported}
               motionPlan={result.motionPlan}
               linguisticStructure={result.linguisticStructure}
               nonManualMarkers={result.nonManualMarkers}

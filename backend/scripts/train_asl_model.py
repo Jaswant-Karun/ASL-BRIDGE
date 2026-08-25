@@ -14,11 +14,13 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 
-IMAGE_SIZE = (32, 32)
+IMAGE_SIZE = (24, 24)
 VALID_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
 
 
@@ -56,12 +58,15 @@ def main():
     parser.add_argument('--output', default='backend/models/asl-knn.joblib', type=Path)
     parser.add_argument('--predict', type=Path, help='Predict one image with an existing model')
     parser.add_argument('--max-per-class', default=0, type=int, help='Optional cap for quick local smoke training')
+    parser.add_argument('--neighbors', default=3, type=int, help='Number of nearest examples used during prediction')
+    parser.add_argument('--algorithm', choices=['knn', 'random-forest', 'mlp'], default='knn', help='Static classifier to train')
     args = parser.parse_args()
 
     if args.predict:
         classifier = joblib.load(args.output)
-        prediction = classifier.predict([extract_feature(args.predict)])[0]
-        probabilities = classifier.predict_proba([extract_feature(args.predict)])[0]
+        features = [extract_feature(args.predict)]
+        prediction = classifier.predict(features)[0]
+        probabilities = classifier.predict_proba(features)[0]
         ranked = sorted(zip(classifier.classes_, probabilities), key=lambda item: item[1], reverse=True)
         print(json.dumps({'prediction': prediction, 'confidence': float(ranked[0][1]), 'topMatches': [
             {'label': label, 'confidence': float(score)} for label, score in ranked[:3]
@@ -69,10 +74,18 @@ def main():
         return
 
     features, labels = load_dataset(args.dataset, args.max_per_class)
-    classifier = Pipeline([
-        ('scale', StandardScaler()),
-        ('knn', KNeighborsClassifier(n_neighbors=3, weights='distance')),
-    ])
+    if args.algorithm == 'random-forest':
+        classifier = RandomForestClassifier(n_estimators=160, max_features='sqrt', n_jobs=-1, random_state=42)
+    elif args.algorithm == 'mlp':
+        classifier = Pipeline([
+            ('scale', StandardScaler()),
+            ('mlp', MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=35, early_stopping=True, random_state=42)),
+        ])
+    else:
+        classifier = Pipeline([
+            ('scale', StandardScaler()),
+            ('knn', KNeighborsClassifier(n_neighbors=args.neighbors, weights='distance', n_jobs=-1)),
+        ])
 
     test_size = 0.2 if len(features) >= 10 else 0.0
     if test_size:
@@ -88,8 +101,8 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(classifier, args.output)
     metadata = {
-        'model': 'KNeighborsClassifier',
-        'feature': '32x32 grayscale pixels',
+        'model': args.algorithm,
+        'feature': '24x24 grayscale pixels',
         'classes': sorted(set(labels.tolist())),
         'samples': int(len(labels)),
         'validationAccuracy': accuracy,

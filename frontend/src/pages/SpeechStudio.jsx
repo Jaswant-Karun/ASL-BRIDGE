@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { translateText } from '../services/api';
+import { translateText, transcribeAudio } from '../services/api';
 import RainbowAudioVisualizer from '../components/RainbowAudioVisualizer';
 import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
@@ -13,6 +13,7 @@ export default function SpeechStudio() {
   const [isLoading, setIsLoading] = useState(false);
   const [micStream, setMicStream] = useState(null);
   const [speechNotice, setSpeechNotice] = useState('');
+  const [whisperLoading, setWhisperLoading] = useState(false);
 
   // Critical Refs for bulletproof synchronous state control
   const isRecordingRef = useRef(false);
@@ -210,6 +211,25 @@ export default function SpeechStudio() {
     }
   };
 
+  const handleWhisperFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setWhisperLoading(true);
+    setSpeechNotice('Whisper is transcribing your audio locally...');
+    try {
+      const result = await transcribeAudio(file);
+      setTranscript(result.text || '');
+      sessionFinalTextRef.current = result.text || '';
+      setInterimText('');
+      setSpeechNotice(`Whisper detected ${result.language || 'the spoken language'} using the local ${result.model || 'Whisper'} model.`);
+    } catch (error) {
+      setSpeechNotice(error.message || 'Whisper transcription failed.');
+    } finally {
+      setWhisperLoading(false);
+      event.target.value = '';
+    }
+  };
+
   // Cleanup on component unmount
   useEffect(() => {
     return () => {
@@ -245,6 +265,11 @@ export default function SpeechStudio() {
             <span className="btn-icon">{isRecording ? '⏹️' : '🎙️'}</span>
             <span>{isRecording ? 'Stop & Extract Spoken Words' : 'Start Rainbow Voice Recording'}</span>
           </button>
+
+          <label className="whisper-upload-button">
+            {whisperLoading ? 'Transcribing with Whisper...' : 'Transcribe audio with Whisper'}
+            <input type="file" accept="audio/*,video/*" onChange={handleWhisperFile} disabled={whisperLoading} />
+          </label>
 
           <button
             type="button"

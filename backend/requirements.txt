@@ -1,0 +1,6 @@
+faster-whisper
+ tensorflow
+ joblib
+ numpy
+ Pillow
+ scikit-learn
