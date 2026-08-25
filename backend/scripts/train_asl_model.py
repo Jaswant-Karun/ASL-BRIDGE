@@ -11,7 +11,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -25,7 +25,7 @@ VALID_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
 
 
 def extract_feature(image_path: Path) -> np.ndarray:
-    image = Image.open(image_path).convert('L').resize(IMAGE_SIZE)
+    image = ImageOps.autocontrast(Image.open(image_path).convert('L')).resize(IMAGE_SIZE)
     pixels = np.asarray(image, dtype=np.float32) / 255.0
     return pixels.reshape(-1)
 

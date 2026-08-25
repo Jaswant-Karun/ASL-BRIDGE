@@ -70,6 +70,20 @@ h2 { font-size: 1.6rem; font-weight: 700; color: #ffffff; }
 .engagement-stat-grid strong { color: var(--accent); font-size: 1.25rem; }
 .xp-progress-track { height: 9px; overflow: hidden; margin-bottom: 1.35rem; background: rgba(2, 6, 23, .7); border-radius: 5px; }
 .xp-progress-track span { display: block; height: 100%; background: linear-gradient(90deg, #14b8a6, #38bdf8, #fbbf24); border-radius: inherit; transition: width .35s ease; }
+.monthly-xp-panel, .badge-shelf { margin-top: 1rem; padding: 1rem; background: rgba(2, 6, 23, .34); border: 1px solid rgba(251, 191, 36, .3); border-radius: 6px; }
+.monthly-xp-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.monthly-xp-heading h4 { margin: .35rem 0 0; color: var(--ink); }
+.monthly-xp-heading > strong { color: #fbbf24; font-size: 1.1rem; }
+.monthly-xp-track { height: 8px; overflow: hidden; margin: .8rem 0 .55rem; background: rgba(15, 23, 42, .8); border-radius: 5px; }
+.monthly-xp-track span { display: block; height: 100%; background: linear-gradient(90deg, #38bdf8, #fbbf24); border-radius: inherit; }
+.monthly-xp-panel p, .empty-badge-message { margin: 0; color: var(--muted); font-size: .78rem; }
+.badge-shelf { border-color: rgba(45, 212, 191, .3); }
+.badge-list { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: .8rem; }
+.achievement-badge { display: flex; align-items: center; gap: .55rem; padding: .65rem .75rem; background: linear-gradient(135deg, rgba(251, 191, 36, .18), rgba(20, 184, 166, .12)); border: 1px solid rgba(251, 191, 36, .55); border-radius: 6px; }
+.achievement-badge > span { display: grid; place-items: center; width: 28px; height: 28px; color: #0b1c32; background: #fbbf24; border-radius: 50%; }
+.achievement-badge strong, .achievement-badge small { display: block; }
+.achievement-badge strong { color: #fef3c7; font-size: .78rem; }
+.achievement-badge small { margin-top: .2rem; color: #a7c7c5; font-size: .65rem; }
 .calendar-section { padding-top: 1rem; border-top: 1px solid var(--blue-border); }
 .calendar-title-row h4 { margin: 0; color: var(--ink); }
 .activity-calendar { display: grid; grid-template-columns: repeat(14, minmax(14px, 1fr)); gap: .35rem; max-width: 520px; margin-top: .8rem; }
@@ -4188,6 +4202,72 @@ body {
   .camera-video-wrap, .camera-video, .camera-placeholder { min-height: 260px; height: 260px; }
   .camera-avatar-preview, .camera-avatar-preview .avatar-3d-wrapper { min-height: 360px; }
 }
+
+.light-theme {
+  --panel: #10243f;
+  --panel-hover: #173557;
+  --blue-bg-deep: #0a172b;
+  --blue-bg-card: #10243f;
+  --blue-bg-card-hover: #173557;
+  --blue-border: rgba(96, 165, 250, .3);
+  --blue-glow: 0 0 24px rgba(37, 99, 235, .24);
+}
+.light-theme .app-sidebar,
+.light-theme .app-sidebar-blue,
+.light-theme .studio-sidebar-panel,
+.light-theme .mode-grid button,
+.light-theme .results-header-card,
+.light-theme .activity-card,
+.light-theme .dictionary-grid > div,
+.light-theme .wardrobe-panel,
+.light-theme .customizer-preview-box,
+.light-theme .syntax-tree-card,
+.light-theme .analytics-stat-grid > div,
+.light-theme .logs-card-section,
+.light-theme .settings-card,
+.light-theme .about-details-card,
+.light-theme .speech-record-panel,
+.light-theme .rainbow-visualizer-box,
+.light-theme .integrated-animatediff-section,
+.light-theme .pipeline-flow-section,
+.light-theme .motion-video-engine-container,
+.light-theme .avatar-3d-wrapper,
+.light-theme .presentation-slide-pane,
+.light-theme .presentation-avatar-pane {
+  color: #e5f2ff;
+  background: linear-gradient(145deg, #10243f 0%, #0c1b32 100%) !important;
+  border-color: rgba(96, 165, 250, .3) !important;
+  box-shadow: 0 12px 28px rgba(2, 12, 32, .22) !important;
+}
+.light-theme .mode-grid button:hover,
+.light-theme .sidebar-nav-btn:hover,
+.light-theme .pill-btn:hover { background: #173557 !important; }
+.light-theme .app-sidebar-blue .sidebar-nav-btn,
+.light-theme .app-sidebar-blue .sidebar-theme-toggle-btn,
+.light-theme .app-sidebar-blue .nav-label,
+.light-theme .app-sidebar-blue .profile-name { color: #dbeafe; }
+.light-theme .app-sidebar-blue .nav-section-title,
+.light-theme .app-sidebar-blue .nav-tag { color: #7dd3fc; }
+.light-theme .app-sidebar-blue .sidebar-nav-btn.active { color: #ffffff; background: #155e75; border-color: #38bdf8; }
+.light-theme .motion-video-engine-container,
+.light-theme .avatar-3d-canvas-container,
+.light-theme .customizer-viewport-wrapper,
+.light-theme .preview-canvas-wrapper { background: #08172d !important; }
+.light-theme .rainbow-textarea,
+.light-theme textarea,
+.light-theme input,
+.light-theme select { color: #e5f2ff; background: #0b1d35 !important; border-color: rgba(96, 165, 250, .35) !important; }
+.light-theme .feature-hero,
+.light-theme .feature-panel,
+.light-theme .feature-metric,
+.light-theme .feature-note-panel,
+.light-theme .maps-resource-panel,
+.light-theme .insight-card,
+.light-theme .camera-avatar-preview { background: linear-gradient(145deg, #10243f, #0c1b32) !important; }
+.light-theme .page-header-banner { background: linear-gradient(110deg, #10243f, #173557) !important; border-color: #38bdf8; }
+.light-theme .page-header-banner h2,
+.light-theme .page-header-banner p,
+.light-theme .page-header-banner .rainbow-kicker { color: #e5f2ff; }
 
 
 

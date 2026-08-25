@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { dateKeyFromOffset, getEngagement, getStreakStats } from '../utils/engagementTracker';
+import { dateKeyFromOffset, getEngagement, getStreakStats, getMonthlyStats } from '../utils/engagementTracker';
 
 export default function ProfilePage({ user }) {
   const displayName = user?.name || 'Studio Member';
   const initials = displayName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
   const engagement = useMemo(() => getEngagement(user), [user]);
   const { currentStreak, longestStreak } = getStreakStats(engagement);
+  const monthly = getMonthlyStats(engagement);
   const calendarDays = Array.from({ length: 28 }, (_, index) => {
     const key = dateKeyFromOffset(27 - index);
     return { key, activity: engagement.days[key] || null };
@@ -62,6 +63,17 @@ export default function ProfilePage({ user }) {
         </div>
 
         <div className="xp-progress-track" aria-label={`${levelProgress}% to next level`}><span style={{ width: `${levelProgress}%` }} /></div>
+
+        <div className="monthly-xp-panel">
+          <div className="monthly-xp-heading"><div><span className="rainbow-kicker">MONTHLY CHALLENGE</span><h4>Monthly XP limit</h4></div><strong>{monthly.xp} / {monthly.limit} XP</strong></div>
+          <div className="monthly-xp-track"><span style={{ width: `${Math.min(100, (monthly.xp / monthly.limit) * 100)}%` }} /></div>
+          <p>{monthly.capped ? 'Monthly limit reached. Your unique badge has been awarded!' : `${monthly.remaining} XP remaining this month. Reach 500 XP to unlock your monthly badge.`}</p>
+        </div>
+
+        <div className="badge-shelf">
+          <div className="calendar-title-row"><h4>Achievement badges</h4><span>{engagement.badges.length} earned</span></div>
+          {engagement.badges.length > 0 ? <div className="badge-list">{engagement.badges.slice().reverse().map((badge) => <div className="achievement-badge" key={badge.id}><span>★</span><div><strong>Monthly Master</strong><small>Month of {badge.month || badge.week}</small></div></div>)}</div> : <p className="empty-badge-message">Complete the monthly XP challenge to earn your first unique badge.</p>}
+        </div>
 
         <div className="calendar-section">
           <div className="calendar-title-row"><h4>Activity calendar</h4><span>Last 28 days</span></div>

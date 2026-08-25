@@ -17,6 +17,7 @@ export default function CameraMode() {
   const lastVideoTimeRef = useRef(-1);
   const predictionBusyRef = useRef(false);
   const lastPredictionAtRef = useRef(0);
+  const predictionHistoryRef = useRef([]);
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
   const recordingChunksRef = useRef([]);
@@ -59,13 +60,17 @@ export default function CameraMode() {
       const maxX = Math.min(1, Math.max(...points.map((point) => point.x)) + 0.14);
       const minY = Math.max(0, Math.min(...points.map((point) => point.y)) - 0.14);
       const maxY = Math.min(1, Math.max(...points.map((point) => point.y)) + 0.14);
-      const cropX = minX * sourceWidth;
-      const cropY = minY * sourceHeight;
-      const cropWidth = Math.max(1, (maxX - minX) * sourceWidth);
-      const cropHeight = Math.max(1, (maxY - minY) * sourceHeight);
+      const boxX = minX * sourceWidth;
+      const boxY = minY * sourceHeight;
+      const boxWidth = Math.max(1, (maxX - minX) * sourceWidth);
+      const boxHeight = Math.max(1, (maxY - minY) * sourceHeight);
+      const cropSize = Math.min(Math.max(boxWidth, boxHeight), Math.min(sourceWidth, sourceHeight));
+      const cropX = Math.max(0, Math.min(sourceWidth - cropSize, boxX + boxWidth / 2 - cropSize / 2));
+      const cropY = Math.max(0, Math.min(sourceHeight - cropSize, boxY + boxHeight / 2 - cropSize / 2));
       canvas.width = 256;
       canvas.height = 256;
-      canvas.getContext('2d').drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+      const context = canvas.getContext('2d');
+      context.drawImage(video, cropX, cropY, cropSize, cropSize, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
       if (!blob) {
         predictionBusyRef.current = false;
@@ -79,10 +84,19 @@ export default function CameraMode() {
         const prediction = await response.json();
         if (!response.ok) throw new Error(prediction.error || `Recognition service returned ${response.status}.`);
         const label = String(prediction.prediction || 'UNKNOWN').toUpperCase();
-        setDetectedGesture(label);
-        setConfidence(Math.round(Number(prediction.confidence || 0) * 100));
-        setGestureText(`The trained ASL model predicts ${label}. Top matches: ${(prediction.topMatches || []).map((match) => `${match.label} (${Math.round(match.confidence * 100)}%)`).join(', ') || 'none'}.`);
-        setMotionPlan(createMotionPlan(label));
+        const history = [...predictionHistoryRef.current, label].slice(-5);
+        predictionHistoryRef.current = history;
+        const counts = history.reduce((result, item) => ({ ...result, [item]: (result[item] || 0) + 1 }), {});
+        const stableLabel = Object.entries(counts).sort((left, right) => right[1] - left[1])[0][0];
+        const modelConfidence = Number(prediction.confidence || 0);
+        if (counts[stableLabel] >= 3 && modelConfidence >= 0.45) {
+          setDetectedGesture(stableLabel);
+          setConfidence(Math.round(modelConfidence * 100));
+          setGestureText(`Stable model prediction: ${stableLabel}. Top matches: ${(prediction.topMatches || []).map((match) => `${match.label} (${Math.round(match.confidence * 100)}%)`).join(', ') || 'none'}.`);
+          setMotionPlan(createMotionPlan(stableLabel));
+        } else {
+          setGestureText('Checking several frames before confirming the letter. Hold your hand steady.');
+        }
         setPredictionError('');
       } catch (predictionError) {
         setPredictionError(predictionError.message || 'Recognition service unavailable.');
