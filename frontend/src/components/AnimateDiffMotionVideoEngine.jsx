@@ -23,7 +23,8 @@ export default function AnimateDiffMotionVideoEngine({
   isPlaying = true,
   playbackRate = 1.0,
   loopSingleSign = false,
-  onSignComplete = null
+  onSignComplete = null,
+  datasetGestures = null
 }) {
   const mountRef = useRef(null);
   const [cameraView, setCameraView] = useState('studio'); // 'studio' | 'hands' | 'cinematic'
@@ -41,6 +42,11 @@ export default function AnimateDiffMotionVideoEngine({
 
   const totalFrames = motionPlan?.totalFrames || 180;
   const motionUnits = motionPlan?.motionUnits || [];
+  const activeMotionUnit = motionUnits.find(
+    (unit) => currentFrameNum >= unit.startFrame && currentFrameNum <= unit.endFrame
+  ) || motionUnits[activeSignIndex] || null;
+  const datasetReference = activeMotionUnit?.datasetGesture ||
+    datasetGestures?.flatGestureStream?.[activeSignIndex] || null;
 
   useEffect(() => {
     const container = mountRef.current;
@@ -55,7 +61,7 @@ export default function AnimateDiffMotionVideoEngine({
 
     // 2. Perspective Camera
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
-    camera.position.set(0, 0.38, 2.05);
+    camera.position.set(0, 0.28, 1.82);
     cameraRef.current = camera;
 
     // 3. WebGL Renderer
@@ -104,7 +110,7 @@ export default function AnimateDiffMotionVideoEngine({
     });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.7;
+    floor.position.y = -1.02;
     floor.receiveShadow = true;
     scene.add(floor);
 
@@ -114,12 +120,13 @@ export default function AnimateDiffMotionVideoEngine({
 
     // 6. Interactive 360 Drag Orbit Controls
     const dom = renderer.domElement;
-    const onMouseDown = (e) => {
+    const onPointerDown = (e) => {
       isDraggingRef.current = true;
       prevMouseRef.current = { x: e.clientX, y: e.clientY };
+      dom.setPointerCapture?.(e.pointerId);
     };
 
-    const onMouseMove = (e) => {
+    const onPointerMove = (e) => {
       if (!isDraggingRef.current || !characterRef.current) return;
       const deltaX = e.clientX - prevMouseRef.current.x;
       const deltaY = e.clientY - prevMouseRef.current.y;
@@ -129,7 +136,7 @@ export default function AnimateDiffMotionVideoEngine({
       camera.position.y = Math.max(0.1, Math.min(0.8, camera.position.y - deltaY * 0.003));
     };
 
-    const onMouseUp = () => {
+    const onPointerUp = () => {
       isDraggingRef.current = false;
     };
 
@@ -142,15 +149,15 @@ export default function AnimateDiffMotionVideoEngine({
       renderer.setSize(w, h);
     };
 
-    dom.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    dom.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('resize', handleResize);
 
     return () => {
-      dom.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      dom.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
       window.removeEventListener('resize', handleResize);
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -163,11 +170,11 @@ export default function AnimateDiffMotionVideoEngine({
   useEffect(() => {
     if (!cameraRef.current) return;
     if (cameraView === 'studio') {
-      cameraRef.current.position.set(0, 0.38, 2.05);
+      cameraRef.current.position.set(0, 0.28, 1.82);
     } else if (cameraView === 'hands') {
-      cameraRef.current.position.set(0.12, 0.22, 1.4);
+      cameraRef.current.position.set(0.08, 0.16, 1.08);
     } else if (cameraView === 'cinematic') {
-      cameraRef.current.position.set(0.4, 0.45, 1.85);
+      cameraRef.current.position.set(0.25, 0.32, 1.6);
     }
   }, [cameraView]);
 
@@ -229,12 +236,20 @@ export default function AnimateDiffMotionVideoEngine({
     return () => {
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
     };
-  }, [isPlaying, motionPlan, totalFrames, playbackRate, isSpeaking, showSkeleton, activeSign]);
+  }, [isPlaying, motionPlan, totalFrames, playbackRate, isSpeaking, showSkeleton, activeSign, datasetGestures]);
 
   return (
     <div className="motion-video-engine-container">
       {/* 3D WebGL Cartoon Canvas Viewport */}
       <div ref={mountRef} className="motion-canvas-viewport" />
+      {datasetReference && (
+        <aside className="dataset-reference-panel" aria-label="Dataset gesture reference">
+          <span className="dataset-reference-label">DATASET HANDSHAPE</span>
+          <strong>{datasetReference.char}</strong>
+          <small>{datasetReference.handshape}</small>
+          <span className="dataset-match-status">3D SHAPE ACTIVE</span>
+        </aside>
+      )}
 
       {/* Cinematic Camera Switcher */}
       <div className="camera-view-bar">
@@ -283,7 +298,7 @@ export default function AnimateDiffMotionVideoEngine({
 }
 
 /**
- * Builds a friendly, expressive 3D Cartoon Avatar Character in Three.js
+ * Builds a front-facing 3D human presenter with articulated signing limbs.
  */
 function buildCartoonAvatar(scene, avatar) {
   const root = new THREE.Group();
@@ -338,11 +353,19 @@ function buildCartoonAvatar(scene, avatar) {
 
   // 1. Torso Group
   const torsoGroup = new THREE.Group();
-  const torsoGeo = new THREE.CylinderGeometry(0.25, 0.22, 0.55, 24);
+  const torsoGeo = new THREE.CapsuleGeometry(0.21, 0.34, 8, 24);
   const torso = new THREE.Mesh(torsoGeo, clothMaterial);
+  torso.position.y = -0.08;
   torso.castShadow = true;
   torso.receiveShadow = true;
   torsoGroup.add(torso);
+
+  const shoulderGeo = new THREE.SphereGeometry(0.16, 24, 16);
+  shoulderGeo.scale(1.55, 0.58, 0.8);
+  const shoulders = new THREE.Mesh(shoulderGeo, clothMaterial);
+  shoulders.position.set(0, 0.2, 0);
+  shoulders.castShadow = true;
+  torsoGroup.add(shoulders);
 
   // Hoodie collar
   const collarGeo = new THREE.TorusGeometry(0.12, 0.04, 16, 24);
@@ -403,12 +426,12 @@ function buildCartoonAvatar(scene, avatar) {
   const leftEyeGroup = new THREE.Group();
   leftEyeGroup.position.set(-0.058, 0.03, 0.145);
 
-  const eyeWhiteGeo = new THREE.SphereGeometry(0.032, 20, 20);
+  const eyeWhiteGeo = new THREE.SphereGeometry(0.026, 20, 20);
   eyeWhiteGeo.scale(1.0, 1.2, 0.5);
   const leftEyeWhite = new THREE.Mesh(eyeWhiteGeo, eyeWhiteMat);
   leftEyeGroup.add(leftEyeWhite);
 
-  const irisGeo = new THREE.SphereGeometry(0.018, 16, 16);
+  const irisGeo = new THREE.SphereGeometry(0.014, 16, 16);
   irisGeo.scale(1.0, 1.1, 0.4);
   const leftIris = new THREE.Mesh(irisGeo, irisMat);
   leftIris.position.set(0, 0, 0.016);
@@ -455,7 +478,7 @@ function buildCartoonAvatar(scene, avatar) {
 
   // 7. Right Arm & 5-Finger Hand (Dominant ASL Signing Arm)
   const rShoulder = new THREE.Group();
-  rShoulder.position.set(0.28, 0.22, 0);
+  rShoulder.position.set(0.28, 0.22, 0.14);
 
   const upperArmGeo = new THREE.CylinderGeometry(0.055, 0.048, 0.28, 16);
   upperArmGeo.translate(0, -0.14, 0);
@@ -503,7 +526,7 @@ function buildCartoonAvatar(scene, avatar) {
 
   // 8. Left Arm & 5-Finger Hand
   const lShoulder = new THREE.Group();
-  lShoulder.position.set(-0.28, 0.22, 0);
+  lShoulder.position.set(-0.28, 0.22, 0.14);
 
   const lUpperArm = new THREE.Mesh(upperArmGeo.clone(), clothMaterial);
   lUpperArm.castShadow = true;
@@ -541,6 +564,51 @@ function buildCartoonAvatar(scene, avatar) {
   lElbow.add(lWrist);
   lShoulder.add(lElbow);
   root.add(lShoulder);
+
+  const legGeo = new THREE.CylinderGeometry(0.09, 0.075, 0.48, 18);
+  legGeo.translate(0, -0.24, 0);
+  const rightLeg = new THREE.Mesh(legGeo, clothMaterial);
+  rightLeg.position.set(0.12, -0.52, 0);
+  rightLeg.castShadow = true;
+  root.add(rightLeg);
+  const leftLeg = new THREE.Mesh(legGeo.clone(), clothMaterial);
+  leftLeg.position.set(-0.12, -0.52, 0);
+  leftLeg.castShadow = true;
+  root.add(leftLeg);
+
+  const footGeo = new THREE.SphereGeometry(0.105, 18, 12);
+  footGeo.scale(1.25, 0.55, 1.65);
+  const rightFoot = new THREE.Mesh(footGeo, clothMaterial);
+  rightFoot.position.set(0.12, -1.02, 0.04);
+  rightFoot.castShadow = true;
+  root.add(rightFoot);
+  const leftFoot = new THREE.Mesh(footGeo.clone(), clothMaterial);
+  leftFoot.position.set(-0.12, -1.02, 0.04);
+  leftFoot.castShadow = true;
+  root.add(leftFoot);
+
+  const capMaterial = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.55 });
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 16), capMaterial);
+  cap.scale.set(1.08, 0.42, 1.02);
+  cap.position.set(0, 0.68, 0.005);
+  root.add(cap);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.018, 24), capMaterial);
+  brim.scale.set(1.2, 1, 0.55);
+  brim.position.set(0, 0.62, 0.12);
+  root.add(brim);
+
+  if (avatar.id === 'alex' || avatar.id === 'marcus') {
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.7, roughness: 0.2 });
+    const lensGeo = new THREE.TorusGeometry(0.04, 0.006, 8, 20);
+    [-0.058, 0.058].forEach((x) => {
+      const lens = new THREE.Mesh(lensGeo, frameMaterial);
+      lens.position.set(x, 0.54, 0.147);
+      root.add(lens);
+    });
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.006, 0.006), frameMaterial);
+    bridge.position.set(0, 0.54, 0.147);
+    root.add(bridge);
+  }
 
   return {
     root,
@@ -631,6 +699,11 @@ function updateCartoonAvatarMotion(
   const duration = unit?.durationFrames || 24;
   const progress = Math.max(0, Math.min(1, localFrame / duration));
   const smoothT = Math.sin(progress * Math.PI * 0.5);
+  const handshapeIndex = Math.min(
+    Math.max(0, Math.floor(progress * (unit?.fingerHandshapes?.length || 1))),
+    Math.max(0, (unit?.fingerHandshapes?.length || 1) - 1)
+  );
+  const activeHandshape = unit?.fingerHandshapes?.[handshapeIndex] || unit?.handshape;
 
   // A. Dynamic Body Gestures (Torso Sway, Spine Flexion, Breathing Bounce)
   const bodySwayX = Math.sin(clock * 0.09) * 0.022;
@@ -725,7 +798,7 @@ function updateCartoonAvatarMotion(
   if (char.rFingers) {
     const fingers = ['thumb', 'index', 'middle', 'ring', 'pinky'];
     for (let f = 0; f < 5; f++) {
-      const curl = unit?.handshape?.[fingers[f]]?.[0] ?? (Math.sin(clock * 0.18 + f * 0.8) > 0 ? 0.75 : 0.15);
+      const curl = activeHandshape?.[fingers[f]]?.[0] ?? (Math.sin(clock * 0.18 + f * 0.8) > 0 ? 0.75 : 0.15);
       if (char.rFingers[f]) {
         char.rFingers[f].rotation.x = curl * (Math.PI * 0.5);
       }

@@ -11,6 +11,7 @@ import AvatarCustomizerPage from './pages/AvatarCustomizerPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import PresentationMode from './pages/PresentationMode';
 import SettingsPage from './pages/SettingsPage';
+import ProfilePage from './pages/ProfilePage';
 import About from './pages/About';
 
 export default function App() {
@@ -36,6 +37,8 @@ export default function App() {
   if (stage === 'auth') {
     return (
       <Signup
+        darkMode={darkMode}
+        onToggleTheme={toggleTheme}
         onAuthenticated={(account) => {
           setUser(account);
           setStage('dashboard');
@@ -66,6 +69,8 @@ export default function App() {
         return <PresentationMode navigate={setPage} user={user} />;
       case 'settings':
         return <SettingsPage darkMode={darkMode} onToggleTheme={toggleTheme} />;
+      case 'profile':
+        return <ProfilePage user={user} />;
       case 'about':
         return <About navigate={setPage} />;
       default:

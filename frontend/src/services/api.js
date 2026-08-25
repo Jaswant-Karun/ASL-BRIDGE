@@ -73,5 +73,25 @@ export async function getDatasetLibrary() {
   return result;
 }
 
+export async function predictDatasetGesture(imageFile) {
+  const data = new FormData();
+  data.append('image', imageFile);
+  const response = await fetch(`${API_URL}/asl/predict`, { method: 'POST', body: data });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Gesture prediction failed.');
+  return result;
+}
+
+export async function synthesizeMotion(gloss) {
+  const response = await fetch(`${API_URL}/asl/motion`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ gloss })
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Motion synthesis failed.');
+  return result;
+}
+
 
 

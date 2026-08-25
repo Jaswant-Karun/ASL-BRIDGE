@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export default function Signup({ onAuthenticated, onGuestMode }) {
+export default function Signup({ onAuthenticated, onGuestMode, darkMode = true, onToggleTheme }) {
   const [mode, setMode] = useState('signup');
+  const [signinMethod, setSigninMethod] = useState('email');
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -23,31 +24,23 @@ export default function Signup({ onAuthenticated, onGuestMode }) {
       const response = await fetch(`${API_URL}/auth/${endpoint}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, ...(mode === 'signin' ? { method: signinMethod } : {}) })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to authenticate.');
       onAuthenticated?.(result.user);
     } catch (signupError) {
-      // Fallback for local demo if backend is offline
-      onAuthenticated?.({
-        name: form.name || 'Studio Member',
-        email: form.email || 'user@aslbridge.ai'
-      });
+      setError(signupError.message || 'Unable to authenticate.');
     } finally {
       setLoading(false);
     }
   }
 
-  const enterAsGuest = () => {
-    onAuthenticated?.({
-      name: 'Studio Guest',
-      email: 'guest@aslbridge.ai'
-    });
-  };
-
   return (
-    <main className="auth-page-dark">
+    <main className={`auth-page-dark ${darkMode ? 'dark-theme' : 'light-theme'}`}>
+      <button type="button" className="auth-theme-toggle" onClick={onToggleTheme} title="Toggle dark and light mode">
+        {darkMode ? '☀ Light mode' : '☾ Dark mode'}
+      </button>
       <div className="auth-hero-side">
         <div className="rainbow-brand-badge-large">
           <span>ASL</span>
@@ -111,6 +104,13 @@ export default function Signup({ onAuthenticated, onGuestMode }) {
           </p>
         </div>
 
+          {mode === 'signin' && (
+            <div className="signin-method-switch" role="tablist" aria-label="Sign in method">
+              <button type="button" className={signinMethod === 'email' ? 'active' : ''} onClick={() => setSigninMethod('email')}>Email & Password</button>
+              <button type="button" className={signinMethod === 'identity' ? 'active' : ''} onClick={() => setSigninMethod('identity')}>Username & Personal ID</button>
+            </div>
+          )}
+
         <form onSubmit={submit} className="auth-fields-form">
           {mode === 'signup' && (
             <div className="input-group">
@@ -129,7 +129,18 @@ export default function Signup({ onAuthenticated, onGuestMode }) {
             </div>
           )}
 
-          <div className="input-group">
+          {mode === 'signin' && signinMethod === 'identity' ? (
+            <>
+              <div className="input-group">
+                <label htmlFor="signin-username">Username</label>
+                <input id="signin-username" name="username" type="text" placeholder="your generated username" value={form.username || ''} onChange={updateField} autoComplete="username" required className="rainbow-input" />
+              </div>
+              <div className="input-group">
+                <label htmlFor="signin-public-id">Personal ID</label>
+                <input id="signin-public-id" name="publicId" type="text" placeholder="asl_••••••••" value={form.publicId || ''} onChange={updateField} required className="rainbow-input" />
+              </div>
+            </>
+          ) : <div className="input-group">
             <label htmlFor="signup-email">Email Address</label>
             <input
               id="signup-email"
@@ -142,9 +153,9 @@ export default function Signup({ onAuthenticated, onGuestMode }) {
               required
               className="rainbow-input"
             />
-          </div>
+          </div>}
 
-          <div className="input-group">
+          {(mode === 'signup' || signinMethod === 'email') && <div className="input-group">
             <label htmlFor="signup-password">Password</label>
             <input
               id="signup-password"
@@ -158,7 +169,7 @@ export default function Signup({ onAuthenticated, onGuestMode }) {
               required
               className="rainbow-input"
             />
-          </div>
+          </div>}
 
           <button
             className="rainbow-motion-btn submit-btn"
@@ -168,17 +179,6 @@ export default function Signup({ onAuthenticated, onGuestMode }) {
             <span>{loading ? 'Authenticating...' : mode === 'signup' ? 'Create Free Account' : 'Sign In to Studio'} ➔</span>
           </button>
 
-          <div className="divider-or">
-            <span>OR</span>
-          </div>
-
-          <button
-            type="button"
-            className="rainbow-motion-btn guest-btn"
-            onClick={enterAsGuest}
-          >
-            <span>⚡ Instant Demo Mode (No Login Required)</span>
-          </button>
         </form>
 
         {error && <p className="auth-error-banner">{error}</p>}

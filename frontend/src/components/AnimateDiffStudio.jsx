@@ -132,10 +132,12 @@ export default function AnimateDiffStudio({
       onEnd: () => {
         setIsSpeaking(false);
         setCurrentSpokenWord('');
+        avatarSpeech.stop();
       },
       onError: () => {
         setIsSpeaking(false);
         setCurrentSpokenWord('');
+        avatarSpeech.stop();
       }
     });
   };
@@ -352,6 +354,7 @@ export default function AnimateDiffStudio({
                 avatar={selectedAvatar}
                 motionPlan={effectiveMotionPlan}
                 activeSign={activeSign}
+                datasetGestures={datasetGestures}
                 activeSignIndex={currentSignIndex}
                 isSpeaking={isSpeaking}
                 isPlaying={isPlaying}

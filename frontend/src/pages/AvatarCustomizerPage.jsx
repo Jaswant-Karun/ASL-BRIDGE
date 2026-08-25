@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AnimateDiffMotionVideoEngine from '../components/AnimateDiffMotionVideoEngine';
+import { synthesizeMotion } from '../services/api';
 
 export default function AvatarCustomizerPage() {
   const [selectedAvatarId, setSelectedAvatarId] = useState('marcus');
   const [activeGesture, setActiveGesture] = useState('HELLO');
+  const [motionPlan, setMotionPlan] = useState(null);
+
+  useEffect(() => {
+    synthesizeMotion([activeGesture.replace('_', ' ')])
+      .then(setMotionPlan)
+      .catch(() => setMotionPlan(null));
+  }, [activeGesture]);
 
   const avatars = [
     {
       id: 'marcus',
+      avatarImage: '/assets/avatars/marcus.png',
       name: 'Marcus',
       role: 'Accessibility Interpreter',
       badge: 'Emerald Cartoon',
@@ -16,6 +25,7 @@ export default function AvatarCustomizerPage() {
     },
     {
       id: 'alex',
+      avatarImage: '/assets/avatars/alex.png',
       name: 'Alex',
       role: 'Tech Digital Human',
       badge: 'Cyan Cartoon',
@@ -24,6 +34,7 @@ export default function AvatarCustomizerPage() {
     },
     {
       id: 'maya',
+      avatarImage: '/assets/avatars/maya.png',
       name: 'Maya',
       role: 'Anime / Stylized Signer',
       badge: 'Pink Anime Cartoon',
@@ -32,6 +43,7 @@ export default function AvatarCustomizerPage() {
     },
     {
       id: 'sarah',
+      avatarImage: '/assets/avatars/sarah.png',
       name: 'Sarah',
       role: 'Studio ASL Interpreter',
       badge: 'Coral Studio Cartoon',
@@ -107,6 +119,7 @@ export default function AvatarCustomizerPage() {
           <div className="customizer-viewport-wrapper">
             <AnimateDiffMotionVideoEngine
               avatar={currentAvatar}
+              motionPlan={motionPlan}
               activeSign={{ token: activeGesture }}
               isPlaying={true}
             />

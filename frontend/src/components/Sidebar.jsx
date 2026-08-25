@@ -169,11 +169,11 @@ export default function Sidebar({
               type="button"
               className="dropdown-action-btn"
               onClick={() => {
-                navigate('settings');
+                navigate('profile');
                 setShowProfileMenu(false);
               }}
             >
-              👤 Account Settings
+              👤 View Profile
             </button>
             <button
               type="button"

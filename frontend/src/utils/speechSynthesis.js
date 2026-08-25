@@ -34,49 +34,22 @@ class AvatarSpeechService {
     const englishVoices = this.voices.filter((v) => v.lang.startsWith('en'));
     const allVoices = englishVoices.length > 0 ? englishVoices : this.voices;
 
+    const preferredVoice = (names) => allVoices.find((voice) => names.some((name) => voice.name.includes(name)));
+
     switch (avatarId) {
       case 'sarah': {
-        const female = allVoices.find(
-          (v) =>
-            v.name.includes('Female') ||
-            v.name.includes('Zira') ||
-            v.name.includes('Samantha') ||
-            v.name.includes('Google US English') ||
-            v.name.includes('Victoria')
-        );
+        const female = preferredVoice(['Zira', 'Samantha', 'Victoria', 'Google US English', 'Female']);
         return female || allVoices[0] || null;
       }
       case 'alex': {
-        const male = allVoices.find(
-          (v) =>
-            v.name.includes('David') ||
-            v.name.includes('Male') ||
-            v.name.includes('Alex') ||
-            v.name.includes('Guy') ||
-            v.name.includes('Natural')
-        );
+        const male = preferredVoice(['David', 'Alex', 'Guy', 'Male', 'Natural']);
         return male || allVoices[1] || allVoices[0] || null;
       }
       case 'maya': {
-        const voice = allVoices.find(
-          (v) =>
-            v.name.includes('Karen') ||
-            v.name.includes('Moira') ||
-            v.name.includes('Fiona') ||
-            v.name.includes('Female')
-        );
-        return voice || allVoices[0] || null;
+        return preferredVoice(['Karen', 'Moira', 'Fiona']) || allVoices[2] || allVoices[0] || null;
       }
       case 'marcus': {
-        const voice = allVoices.find(
-          (v) =>
-            v.name.includes('George') ||
-            v.name.includes('Daniel') ||
-            v.name.includes('Oliver') ||
-            v.name.includes('David') ||
-            v.name.includes('Male')
-        );
-        return voice || allVoices[0] || null;
+        return preferredVoice(['George', 'Daniel', 'Oliver']) || allVoices[3] || allVoices[1] || null;
       }
       default:
         return allVoices[0] || null;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { createASLGestureController } from '../utils/aslGestureController';
 
 export default function Avatar3DCanvas({
   motionPlan = null,
@@ -64,6 +65,7 @@ export default function Avatar3DCanvas({
 
     // 5. Construct 3D Digital Human Avatar Rig
     const rig = buildAvatarRig(scene);
+    rig.gestureController = createASLGestureController(rig);
     avatarRigRef.current = rig;
 
     // 6. Mouse Orbit Interaction
@@ -333,18 +335,25 @@ function buildAvatarRig(scene) {
   const rWristGroup = new THREE.Group();
   rWristGroup.position.set(0, -0.26, 0);
 
-  // Hand Palm & Articulated 5 Fingers
   const palmGeo = new THREE.BoxGeometry(0.07, 0.08, 0.02);
   palmGeo.translate(0, -0.04, 0);
   const rPalm = new THREE.Mesh(palmGeo, skinMaterial);
   rWristGroup.add(rPalm);
 
+  const rThumb = new THREE.Group();
+  rThumb.position.set(0.03, -0.03, 0.04);
+  const rThumbMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.05, 8), skinMaterial);
+  rThumbMesh.rotation.z = Math.PI / 2;
+  rThumbMesh.position.set(0.018, -0.02, 0);
+  rThumb.add(rThumbMesh);
+  rWristGroup.add(rThumb);
+
   const rFingers = [];
-  const fingerOffsets = [-0.024, -0.008, 0.008, 0.024, 0.035];
-  for (let f = 0; f < 5; f++) {
+  const fingerOffsets = [-0.02, -0.006, 0.008, 0.024];
+  for (let f = 0; f < 4; f++) {
     const fGroup = new THREE.Group();
-    fGroup.position.set(fingerOffsets[f], -0.08, 0);
-    const fGeo = new THREE.CylinderGeometry(0.007, 0.006, 0.06, 8);
+    fGroup.position.set(fingerOffsets[f], -0.08, 0.01 * (f % 2 === 0 ? -1 : 1));
+    const fGeo = new THREE.CylinderGeometry(0.0065, 0.0055, 0.06, 8);
     fGeo.translate(0, -0.03, 0);
     const fMesh = new THREE.Mesh(fGeo, skinMaterial);
     fGroup.add(fMesh);
@@ -379,11 +388,19 @@ function buildAvatarRig(scene) {
   const lPalm = new THREE.Mesh(palmGeo.clone(), skinMaterial);
   lWristGroup.add(lPalm);
 
+  const lThumb = new THREE.Group();
+  lThumb.position.set(-0.03, -0.03, 0.04);
+  const lThumbMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.05, 8), skinMaterial);
+  lThumbMesh.rotation.z = -Math.PI / 2;
+  lThumbMesh.position.set(-0.018, -0.02, 0);
+  lThumb.add(lThumbMesh);
+  lWristGroup.add(lThumb);
+
   const lFingers = [];
-  for (let f = 0; f < 5; f++) {
+  for (let f = 0; f < 4; f++) {
     const fGroup = new THREE.Group();
-    fGroup.position.set(fingerOffsets[f], -0.08, 0);
-    const fGeo = new THREE.CylinderGeometry(0.007, 0.006, 0.06, 8);
+    fGroup.position.set(fingerOffsets[f], -0.08, 0.01 * (f % 2 === 0 ? 1 : -1));
+    const fGeo = new THREE.CylinderGeometry(0.0065, 0.0055, 0.06, 8);
     fGeo.translate(0, -0.03, 0);
     const fMesh = new THREE.Mesh(fGeo, skinMaterial);
     fGroup.add(fMesh);
@@ -403,10 +420,12 @@ function buildAvatarRig(scene) {
     rShoulder: rShoulderGroup,
     rElbow: rElbowGroup,
     rWrist: rWristGroup,
+    rThumb,
     rFingers,
     lShoulder: lShoulderGroup,
     lElbow: lElbowGroup,
     lWrist: lWristGroup,
+    lThumb,
     lFingers,
     skinMaterial,
     clothMaterial,
@@ -476,11 +495,18 @@ function updateAvatarPose(rig, unit, frameInt, renderMode) {
     rig.lElbow.rotation.set(0.3, 0, 0);
   }
 
-  // 5. Finger Joint Flexion / Curls
-  if (unit.handshape && rig.rFingers) {
-    const fingers = ['thumb', 'index', 'middle', 'ring', 'pinky'];
-    for (let f = 0; f < 5; f++) {
-      const curlArr = unit.handshape[fingers[f]] || [0, 0, 0];
+  // 5. ASL Letter Pose Mapping: drive the actual finger & wrist articulation
+  const rawToken = String(unit?.datasetGesture?.char || unit?.token || 'neutral');
+  const letters = rawToken.replace(/[^A-Za-z]/g, '').toUpperCase().split('').filter(Boolean);
+  const letter = letters[0] || 'NEUTRAL';
+  if (rig.gestureController) {
+    const poseBlend = Math.min(1, Math.max(0, progress));
+    rig.gestureController.applySequence(letter, poseBlend, 'right');
+    rig.gestureController.applySequence(letter, poseBlend * 0.8, 'left');
+  } else if (unit.handshape && rig.rFingers) {
+    const fallbackFingers = ['index', 'middle', 'ring', 'pinky'];
+    for (let f = 0; f < fallbackFingers.length; f++) {
+      const curlArr = unit.handshape[fallbackFingers[f]] || [0, 0, 0];
       const curlAmount = curlArr[0] || 0;
       if (rig.rFingers[f]) {
         rig.rFingers[f].rotation.x = curlAmount * (Math.PI * 0.45);
