@@ -6,8 +6,6 @@ export default function DictionaryPage() {
   const [selectedSign, setSelectedSign] = useState('HELLO');
   const [activeLetter, setActiveLetter] = useState('A');
 
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
   const commonSigns = [
     { token: 'HELLO', category: 'Greetings', handshape: 'Open 5 to B', desc: 'Salute outward from temple' },
     { token: 'THANK_YOU', category: 'Politeness', handshape: 'Flat B hand', desc: 'Fingertips touch chin and move outward' },
@@ -22,6 +20,14 @@ export default function DictionaryPage() {
     { token: 'REVIEW', category: 'Work', handshape: 'R hand back sweep', desc: 'Right R hand sweeps backward across left palm' }
   ];
 
+  function pickRandom() {
+    const all = [...commonSigns.map(s => s.token), ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+    const pick = all[Math.floor(Math.random() * all.length)];
+    setSelectedSign(pick);
+    if (pick.length === 1) setActiveLetter(pick);
+  }
+
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const filteredSigns = commonSigns.filter((s) =>
     s.token.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -64,15 +70,20 @@ export default function DictionaryPage() {
       <div className="dictionary-grid">
         {/* Left Side: Search & Sign List */}
         <div className="sign-list-panel">
-          <div className="search-box">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Search ASL signs or categories..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="dictionary-search-input"
-            />
+          <div className="dict-toolbar">
+            <div className="search-box" style={{ flex: 1 }}>
+              <span className="search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Search ASL signs or categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="dictionary-search-input"
+              />
+            </div>
+            <button type="button" className="random-sign-btn" onClick={pickRandom} title="Show a random sign">
+              🎲 Random
+            </button>
           </div>
 
           <div className="sign-card-list">

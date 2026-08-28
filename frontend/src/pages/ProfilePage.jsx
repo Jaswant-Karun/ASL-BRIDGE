@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { dateKeyFromOffset, getEngagement, getStreakStats, getMonthlyStats } from '../utils/engagementTracker';
 
 export default function ProfilePage({ user }) {
@@ -13,6 +13,25 @@ export default function ProfilePage({ user }) {
   });
   const level = Math.floor(engagement.totalXp / 100) + 1;
   const levelProgress = engagement.totalXp % 100;
+
+  const [idCopied, setIdCopied] = useState(false);
+  const [usernameCopied, setUsernameCopied] = useState(false);
+
+  function copyId() {
+    const id = user?.publicId || 'guest-session';
+    navigator.clipboard?.writeText(id).then(() => {
+      setIdCopied(true);
+      setTimeout(() => setIdCopied(false), 2000);
+    });
+  }
+
+  function copyUsername() {
+    const un = `@${user?.username || 'studio_guest'}`;
+    navigator.clipboard?.writeText(un).then(() => {
+      setUsernameCopied(true);
+      setTimeout(() => setUsernameCopied(false), 2000);
+    });
+  }
 
   return (
     <div className="profile-page">
@@ -36,13 +55,23 @@ export default function ProfilePage({ user }) {
       <section className="profile-details-grid">
         <div className="settings-card">
           <span className="rainbow-kicker">PUBLIC USERNAME</span>
-          <strong className="profile-detail-value">@{user?.username || 'studio_guest'}</strong>
+          <div className="id-copy-row">
+            <strong className="profile-detail-value">@{user?.username || 'studio_guest'}</strong>
+            <button type="button" className={`id-copy-btn ${usernameCopied ? 'id-copy-btn--copied' : ''}`} onClick={copyUsername}>
+              {usernameCopied ? '✓ Copied' : '⎘ Copy'}
+            </button>
+          </div>
           <p>This username is generated once and stays unique to your account.</p>
         </div>
         <div className="settings-card">
           <span className="rainbow-kicker">PERSONAL ACCESS ID</span>
-          <strong className="profile-detail-value">{user?.publicId || 'guest-session'}</strong>
-          <p>Use this ID when connecting your personal account to this project.</p>
+          <div className="id-copy-row">
+            <strong className="profile-detail-value">{user?.publicId || 'guest-session'}</strong>
+            <button type="button" className={`id-copy-btn ${idCopied ? 'id-copy-btn--copied' : ''}`} onClick={copyId}>
+              {idCopied ? '✓ Copied' : '⎘ Copy'}
+            </button>
+          </div>
+          <p>Use this short ID to sign in without a password via Username &amp; Personal ID.</p>
         </div>
       </section>
 

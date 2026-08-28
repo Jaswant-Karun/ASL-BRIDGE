@@ -29,6 +29,7 @@ export default function CameraMode() {
   const [confidence, setConfidence] = useState(0);
   const [gestureText, setGestureText] = useState('Allow webcam access to begin landmark detection.');
   const [motionPlan, setMotionPlan] = useState(createMotionPlan('OPEN_PALM'));
+  const [gestureLog, setGestureLog] = useState([]); // history of confirmed letters
   const [predictionError, setPredictionError] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingUrl, setRecordingUrl] = useState('');
@@ -94,6 +95,11 @@ export default function CameraMode() {
           setConfidence(Math.round(modelConfidence * 100));
           setGestureText(`Stable model prediction: ${stableLabel}. Top matches: ${(prediction.topMatches || []).map((match) => `${match.label} (${Math.round(match.confidence * 100)}%)`).join(', ') || 'none'}.`);
           setMotionPlan(createMotionPlan(stableLabel));
+          // append to history log (keep last 30, skip duplicates in a row)
+          setGestureLog((prev) => {
+            if (prev[prev.length - 1] === stableLabel) return prev;
+            return [...prev, stableLabel].slice(-30);
+          });
         } else {
           setGestureText('Reading hand position…');
         }
@@ -222,6 +228,35 @@ export default function CameraMode() {
           <div className="insight-card"><span className="detail-label">Landmark confidence</span><strong className="detail-value">{confidence ? `${confidence}%` : 'Waiting'}</strong></div>
           <div className="insight-card accent-card"><span className="detail-label">Interpretation</span><p>{gestureText}</p></div>
           <div className="insight-card"><span className="detail-label">Recognition scope</span><p>Landmarks are tracked live and each sampled frame is classified by the local trained ASL model. Continuous words and body-language semantics require a temporal video model.</p></div>
+
+          {/* Gesture history log */}
+          <div className="insight-card">
+            <span className="detail-label">Gesture history</span>
+            <div className="gesture-history-log">
+              {gestureLog.length === 0 ? (
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--muted)' }}>No gestures recorded yet.</p>
+              ) : (
+                <>
+                  <div className="history-tape">
+                    {gestureLog.map((g, i) => (
+                      <span
+                        key={i}
+                        className={`history-chip ${i === gestureLog.length - 1 ? 'history-chip--latest' : ''}`}
+                      >
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>
+                      {gestureLog.length} gesture{gestureLog.length !== 1 ? 's' : ''} · spelled: <strong style={{ color: 'var(--accent)' }}>{gestureLog.filter(g => /^[A-Z]$/.test(g)).join('')}</strong>
+                    </span>
+                    <button type="button" className="clear-history-btn" onClick={() => setGestureLog([])}>Clear</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </aside>
       </div>
     </div>

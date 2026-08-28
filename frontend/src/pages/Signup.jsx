@@ -137,7 +137,7 @@ export default function Signup({ onAuthenticated, onGuestMode, darkMode = true, 
               </div>
               <div className="input-group">
                 <label htmlFor="signin-public-id">Personal ID</label>
-                <input id="signin-public-id" name="publicId" type="text" placeholder="asl_••••••••" value={form.publicId || ''} onChange={updateField} required className="rainbow-input" />
+                <input id="signin-public-id" name="publicId" type="text" placeholder="AS_••••••" value={form.publicId || ''} onChange={updateField} required className="rainbow-input" />
               </div>
             </>
           ) : <div className="input-group">

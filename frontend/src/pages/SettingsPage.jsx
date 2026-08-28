@@ -1,106 +1,151 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+/* ── Small reusable toggle switch ─────────────────────────────────────── */
+function Toggle({ on, onChange, label, id }) {
+  return (
+    <button
+      id={id}
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      className={`settings-toggle ${on ? 'settings-toggle--on' : ''}`}
+      onClick={() => onChange(!on)}
+    >
+      <span className="settings-toggle__thumb" />
+    </button>
+  );
+}
 
 export default function SettingsPage({ darkMode, onToggleTheme }) {
-  const [rainbowIntensity, setRainbowIntensity] = useState(85);
-  const [captionSize, setCaptionSize] = useState('medium');
-  const [speechSpeed, setSpeechSpeed] = useState(1.0);
-  const [autoVoice, setAutoVoice] = useState(true);
+  /* persist all prefs in localStorage so they survive page refresh */
+  const load = (key, fallback) => {
+    try { const v = localStorage.getItem(`asl-pref-${key}`); return v !== null ? JSON.parse(v) : fallback; }
+    catch { return fallback; }
+  };
+  const save = (key, val) => {
+    try { localStorage.setItem(`asl-pref-${key}`, JSON.stringify(val)); } catch {}
+  };
+
+  const [rainbowGlow,   setRainbowGlow]   = useState(() => load('rainbowGlow', true));
+  const [rainbowInt,    setRainbowInt]     = useState(() => load('rainbowInt', 85));
+  const [autoVoice,     setAutoVoice]      = useState(() => load('autoVoice', true));
+  const [captionsOn,    setCaptionsOn]     = useState(() => load('captionsOn', true));
+  const [captionSize,   setCaptionSize]    = useState(() => load('captionSize', 'medium'));
+  const [speechSpeed,   setSpeechSpeed]    = useState(() => load('speechSpeed', 1.0));
+  const [landmarkDots,  setLandmarkDots]   = useState(() => load('landmarkDots', true));
+  const [gestureSound,  setGestureSound]   = useState(() => load('gestureSound', false));
+  const [reduceMotion,  setReduceMotion]   = useState(() => load('reduceMotion', false));
+
+  /* persist on every change */
+  useEffect(() => save('rainbowGlow',  rainbowGlow),  [rainbowGlow]);
+  useEffect(() => save('rainbowInt',   rainbowInt),   [rainbowInt]);
+  useEffect(() => save('autoVoice',    autoVoice),    [autoVoice]);
+  useEffect(() => save('captionsOn',   captionsOn),   [captionsOn]);
+  useEffect(() => save('captionSize',  captionSize),  [captionSize]);
+  useEffect(() => save('speechSpeed',  speechSpeed),  [speechSpeed]);
+  useEffect(() => save('landmarkDots', landmarkDots), [landmarkDots]);
+  useEffect(() => save('gestureSound', gestureSound), [gestureSound]);
+  useEffect(() => save('reduceMotion', reduceMotion), [reduceMotion]);
 
   return (
     <div className="settings-page">
       <header className="page-header-banner">
         <div className="banner-left">
           <span className="rainbow-kicker">⚙️ SYSTEM PREFERENCES</span>
-          <h2>Rainbow Theme & Studio Settings</h2>
-          <p>Customize rainbow motion outlines, dark background styling, voice speech rates, and live captions.</p>
+          <h2>Studio Settings</h2>
+          <p>All preferences are saved automatically to your browser and applied immediately.</p>
         </div>
       </header>
 
       <div className="settings-grid">
+
+        {/* ── Theme ──────────────────────────────────────────────────── */}
         <div className="settings-card">
-          <h3>🌈 Rainbow Motion & Aesthetics</h3>
+          <h3>🎨 Appearance</h3>
 
           <div className="setting-row">
             <div className="setting-info">
-              <strong>Rainbow Button Outlines</strong>
-              <p>Enable vibrant rainbow neon gradient motion outlines on interactive buttons.</p>
+              <strong>Dark / Light Mode</strong>
+              <p>Switch between the deep-dark cyber studio and the light blue workspace theme.</p>
             </div>
-            <span className="badge-enabled">ENABLED</span>
+            <div className="theme-toggle-group">
+              <button
+                type="button"
+                className={`theme-mode-btn ${darkMode ? '' : 'theme-mode-btn--active'}`}
+                onClick={() => darkMode && onToggleTheme()}
+              >
+                ☀️ Light
+              </button>
+              <button
+                type="button"
+                className={`theme-mode-btn ${darkMode ? 'theme-mode-btn--active' : ''}`}
+                onClick={() => !darkMode && onToggleTheme()}
+              >
+                🌙 Dark
+              </button>
+            </div>
           </div>
 
           <div className="setting-row">
             <div className="setting-info">
-              <strong>Rainbow Glow Intensity</strong>
-              <p>Adjust the brightness and bloom radius of rainbow motion borders.</p>
+              <strong>Rainbow Neon Glow</strong>
+              <p>Enable animated rainbow gradient outlines on buttons and panels.</p>
+            </div>
+            <Toggle on={rainbowGlow} onChange={setRainbowGlow} label="Rainbow glow" />
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <strong>Glow Intensity — {rainbowInt}%</strong>
+              <p>Controls the bloom radius of rainbow motion borders.</p>
             </div>
             <div className="slider-box">
               <input
-                type="range"
-                min="30"
-                max="100"
-                value={rainbowIntensity}
-                onChange={(e) => setRainbowIntensity(e.target.value)}
+                type="range" min="20" max="100"
+                value={rainbowInt}
+                onChange={(e) => setRainbowInt(Number(e.target.value))}
                 className="rainbow-slider"
+                disabled={!rainbowGlow}
+                aria-label="Rainbow glow intensity"
               />
-              <span>{rainbowIntensity}%</span>
+              <span>{rainbowInt}%</span>
             </div>
           </div>
 
           <div className="setting-row">
             <div className="setting-info">
-              <strong>Deep Dark Background Mode</strong>
-              <p>Ultra-dark studio backdrop optimized for high visual contrast.</p>
+              <strong>Reduce Motion</strong>
+              <p>Disables auto-advancing animations and fade transitions for accessibility.</p>
             </div>
-            <button
-              type="button"
-              className={`toggle-switch ${darkMode ? 'active' : ''}`}
-              onClick={onToggleTheme}
-            >
-              {darkMode ? '🌙 Dark Mode Active' : '☀️ Light Mode'}
-            </button>
+            <Toggle on={reduceMotion} onChange={setReduceMotion} label="Reduce motion" />
           </div>
         </div>
 
+        {/* ── Voice ──────────────────────────────────────────────────── */}
         <div className="settings-card">
-          <h3>🔊 Voice Speech & Live Captions</h3>
+          <h3>🔊 Voice &amp; Captions</h3>
 
           <div className="setting-row">
             <div className="setting-info">
-              <strong>Automatic Avatar Voice Narration</strong>
-              <p>Automatically speak the sentence out loud whenever translation begins.</p>
+              <strong>Auto Avatar Voice</strong>
+              <p>Speak the translated sentence automatically after each translation.</p>
             </div>
-            <button
-              type="button"
-              className={`toggle-switch ${autoVoice ? 'active' : ''}`}
-              onClick={() => setAutoVoice(!autoVoice)}
-            >
-              {autoVoice ? '🔊 Voice ON' : '🔇 Muted'}
-            </button>
+            <Toggle on={autoVoice} onChange={setAutoVoice} label="Auto avatar voice" />
           </div>
 
           <div className="setting-row">
             <div className="setting-info">
-              <strong>Speech Narration Speed</strong>
-              <p>Adjust how fast the avatar speaks.</p>
+              <strong>Live Captions</strong>
+              <p>Show real-time subtitle captions beneath the avatar viewport.</p>
             </div>
-            <div className="speed-pills-row">
-              {[0.75, 1.0, 1.25].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`pill-btn ${speechSpeed === s ? 'active' : ''}`}
-                  onClick={() => setSpeechSpeed(s)}
-                >
-                  {s}x
-                </button>
-              ))}
-            </div>
+            <Toggle on={captionsOn} onChange={setCaptionsOn} label="Live captions" />
           </div>
 
           <div className="setting-row">
             <div className="setting-info">
-              <strong>Live Subtitle Caption Size</strong>
-              <p>Configure caption typography size underneath the 3D avatar viewport.</p>
+              <strong>Caption Size</strong>
+              <p>Typography size of the live subtitle banner.</p>
             </div>
             <div className="speed-pills-row">
               {['small', 'medium', 'large'].map((sz) => (
@@ -110,12 +155,66 @@ export default function SettingsPage({ darkMode, onToggleTheme }) {
                   className={`pill-btn ${captionSize === sz ? 'active' : ''}`}
                   onClick={() => setCaptionSize(sz)}
                 >
-                  {sz.toUpperCase()}
+                  {sz[0].toUpperCase() + sz.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <strong>Speech Speed</strong>
+              <p>How fast the avatar narrates the translated sentence.</p>
+            </div>
+            <div className="speed-pills-row">
+              {[0.75, 1.0, 1.25, 1.5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`pill-btn ${speechSpeed === s ? 'active' : ''}`}
+                  onClick={() => setSpeechSpeed(s)}
+                >
+                  {s}×
                 </button>
               ))}
             </div>
           </div>
         </div>
+
+        {/* ── Camera ─────────────────────────────────────────────────── */}
+        <div className="settings-card">
+          <h3>📹 Camera &amp; Gesture Recognition</h3>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <strong>Landmark Dot Overlay</strong>
+              <p>Draw 21 blue landmark dots on your hand in the live camera feed.</p>
+            </div>
+            <Toggle on={landmarkDots} onChange={setLandmarkDots} label="Landmark dots" />
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <strong>Gesture Sound Feedback</strong>
+              <p>Play a subtle click tone each time a new letter is confidently detected.</p>
+            </div>
+            <Toggle on={gestureSound} onChange={setGestureSound} label="Gesture sound" />
+          </div>
+        </div>
+
+        {/* ── About / version ────────────────────────────────────────── */}
+        <div className="settings-card settings-card--info">
+          <h3>ℹ️ About ASL Bridge Studio</h3>
+          <div className="about-info-grid">
+            <div className="about-row"><span>Version</span><strong>1.0.0</strong></div>
+            <div className="about-row"><span>Model</span><strong>KNN · 24×24 grayscale · 36 classes</strong></div>
+            <div className="about-row"><span>Avatar engine</span><strong>Three.js 3D skeletal rig · 60 FPS</strong></div>
+            <div className="about-row"><span>Hand tracking</span><strong>MediaPipe HandLandmarker (21 pts)</strong></div>
+            <div className="about-row"><span>Speech engine</span><strong>Web Speech API · Faster-Whisper</strong></div>
+            <div className="about-row"><span>Theme</span><strong>{darkMode ? 'Dark Cyber Blue' : 'Light Blue'}</strong></div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

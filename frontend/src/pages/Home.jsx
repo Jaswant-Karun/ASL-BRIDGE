@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { translateText } from '../services/api';
 import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
@@ -9,6 +9,15 @@ export default function Home({ navigate, user }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function copyText() {
+    if (!text.trim()) return;
+    navigator.clipboard?.writeText(text.trim()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   const recognitionRef = useRef(null);
   const autoSubmitTimerRef = useRef(null);
@@ -133,6 +142,19 @@ export default function Home({ navigate, user }) {
                   <span className="mic-label">Speak</span>
                 </>
               )}
+            </button>
+          </div>
+
+          {/* Char count + copy */}
+          <div className="home-meta-bar">
+            <span className="char-count-pill">{text.length} chars · {text.trim().split(/\s+/).filter(Boolean).length} words</span>
+            <button
+              type="button"
+              className={`copy-sentence-btn ${copied ? 'copy-sentence-btn--copied' : ''}`}
+              onClick={copyText}
+              disabled={!text.trim()}
+            >
+              {copied ? '✓ Copied!' : '⎘ Copy text'}
             </button>
           </div>
 

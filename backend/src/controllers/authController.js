@@ -23,7 +23,7 @@ export async function signup(request, response, next) {
     if (await User.exists({ email })) return response.status(409).json({ error: 'An account with this email already exists.' });
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ name, email, passwordHash, username: buildUsername(name, email), publicId: `asl_${crypto.randomBytes(8).toString('hex')}` });
+    const user = await User.create({ name, email, passwordHash, username: buildUsername(name, email), publicId: `AS_${crypto.randomBytes(3).toString('hex').toUpperCase()}` });
     return response.status(201).json({ user: publicUser(user) });
   } catch (error) {
     return next(error);
@@ -45,7 +45,7 @@ export async function signin(request, response, next) {
     }
     if (!user.username || !user.publicId) {
       user.username = user.username || buildUsername(user.name, user.email);
-      user.publicId = user.publicId || `asl_${crypto.randomBytes(8).toString('hex')}`;
+      user.publicId = user.publicId || `AS_${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
       await user.save();
     }
     return response.json({ user: publicUser(user) });
