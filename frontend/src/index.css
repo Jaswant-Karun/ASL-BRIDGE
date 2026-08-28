@@ -4276,3 +4276,455 @@ body {
 
 
 
+
+
+/* ==========================================================================
+   MIC BUTTON (Home.jsx speech input)
+   ========================================================================== */
+
+.textarea-mic-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.textarea-mic-row .rainbow-textarea {
+  flex: 1;
+}
+
+.mic-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 72px;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid var(--line, #334155);
+  border-radius: 12px;
+  background: var(--panel, #1e293b);
+  color: var(--text, #e2e8f0);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.mic-btn:hover:not(:disabled) {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.mic-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mic-btn--active {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.mic-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.mic-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+}
+
+/* Pulsing ring when active */
+.mic-pulse-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  border: 2px solid #ef4444;
+  animation: mic-ring-pulse 1.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mic-ring-pulse {
+  0%   { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.18); }
+}
+
+/* ==========================================================================
+   GESTURE STRIP — right-side panel showing hand gesture images per letter
+   ========================================================================== */
+
+/* ==========================================================================
+   GESTURE STRIP — slideshow of ASL hand gesture images per letter
+   ========================================================================== */
+
+.gesture-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem 0.85rem;
+  background: var(--panel, #1e293b);
+  border-left: 1px solid var(--line, #334155);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.2) transparent;
+}
+
+/* empty state */
+.gesture-strip--empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.gesture-strip__placeholder {
+  color: var(--muted, #64748b);
+  font-size: 0.85rem;
+  text-align: center;
+  max-width: 200px;
+}
+
+/* ---- Header ---- */
+.gesture-strip__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.gesture-strip__kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+
+.gesture-strip__count {
+  font-size: 0.72rem;
+  color: var(--muted, #64748b);
+  background: rgba(255,255,255,0.05);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* ---- Active large card ---- */
+.gesture-strip__active-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 14px;
+  padding: 0.9rem 0.75rem;
+  flex-shrink: 0;
+  transition: border-color 0.3s;
+}
+
+.gesture-strip__active-card--playing {
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.12);
+}
+
+/* Image container — relative so the playing badge can overlay */
+.gesture-strip__active-img-wrap {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f172a;
+  flex-shrink: 0;
+}
+
+/* Fade-in animation each time the letter changes */
+@keyframes gs-fade-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+.gesture-strip__active-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gesture-strip__active-img--fade {
+  animation: gs-fade-in 0.35s ease-out forwards;
+}
+
+/* Three-dot "playing" badge */
+.gesture-strip__playing-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: rgba(0,0,0,0.55);
+  padding: 3px 7px;
+  border-radius: 20px;
+}
+
+.gs-play-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #38bdf8;
+  animation: gs-dot-bounce 0.9s ease-in-out infinite;
+}
+
+.gs-play-dot:nth-child(2) { animation-delay: 0.15s; }
+.gs-play-dot:nth-child(3) { animation-delay: 0.30s; }
+
+@keyframes gs-dot-bounce {
+  0%, 100% { transform: translateY(0);    opacity: 0.5; }
+  50%       { transform: translateY(-4px); opacity: 1;   }
+}
+
+/* Meta info below the image */
+.gesture-strip__active-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.gesture-strip__active-char {
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #38bdf8;
+  line-height: 1;
+  animation: gs-fade-in 0.25s ease-out forwards;
+}
+
+.gesture-strip__active-shape {
+  font-size: 0.75rem;
+  color: var(--muted, #94a3b8);
+  font-style: italic;
+}
+
+.gesture-strip__active-word {
+  font-size: 0.7rem;
+  color: var(--muted, #64748b);
+}
+
+/* ---- Progress bar ---- */
+.gesture-strip__progress-track {
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.gesture-strip__progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  transition: width 0.1s linear;
+}
+
+/* ---- Playback controls ---- */
+.gesture-strip__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.gstrip-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line, #334155);
+  background: rgba(255,255,255,0.04);
+  color: var(--text, #e2e8f0);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.gstrip-ctrl-btn:hover {
+  background: rgba(56,189,248,0.12);
+  border-color: #38bdf8;
+}
+
+.gstrip-ctrl-btn--play {
+  width: 36px;
+  height: 36px;
+  font-size: 0.9rem;
+  border-radius: 50%;
+  border-color: rgba(56,189,248,0.4);
+}
+
+.gstrip-ctrl-btn--play.active {
+  background: rgba(56,189,248,0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+/* Speed pills */
+.gstrip-speed-group {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.gstrip-speed-pill {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 20px;
+  border: 1px solid var(--line, #334155);
+  background: rgba(255,255,255,0.04);
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.gstrip-speed-pill:hover {
+  border-color: #38bdf8;
+  color: #e2e8f0;
+}
+
+.gstrip-speed-pill.active {
+  background: rgba(56,189,248,0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+/* ---- Scrollable tile rail ---- */
+.gesture-strip__rail {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.25) transparent;
+}
+
+.gesture-strip__rail::-webkit-scrollbar { height: 3px; }
+.gesture-strip__rail::-webkit-scrollbar-thumb {
+  background: rgba(56,189,248,0.25);
+  border-radius: 3px;
+}
+
+/* ---- Letter tile ---- */
+.gesture-strip__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s, opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.gesture-strip__tile:hover {
+  border-color: rgba(56,189,248,0.4);
+  background: rgba(56,189,248,0.07);
+}
+
+.gesture-strip__tile--active {
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.15);
+  transform: scale(1.1);
+}
+
+/* already-shown letters dim slightly */
+.gesture-strip__tile--past {
+  opacity: 0.45;
+}
+
+/* gap before each new word */
+.gesture-strip__tile--word-start {
+  margin-left: 7px;
+}
+
+.gesture-strip__tile-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 5px;
+  background: #0f172a;
+  display: block;
+}
+
+.gesture-strip__tile-char {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text, #e2e8f0);
+}
+
+/* ---- Word label row ---- */
+.gesture-strip__words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.gesture-strip__word-label {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  color: var(--muted, #64748b);
+  border: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, opacity 0.2s;
+}
+
+.gesture-strip__word-label--active {
+  color: #38bdf8;
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.35);
+}
+
+.gesture-strip__word-label--past {
+  opacity: 0.4;
+}
+
+/* ==========================================================================
+   STUDIO SIDEBAR PANEL — hosts the gesture strip
+   ========================================================================== */
+
+.studio-sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 240px;
+  max-width: 290px;
+}
+
+@media (max-width: 900px) {
+  .studio-sidebar-panel {
+    max-width: 100%;
+    min-width: unset;
+    border-left: none;
+    border-top: 1px solid var(--line, #334155);
+  }
+
+  .gesture-strip {
+    border-left: none;
+  }
+}

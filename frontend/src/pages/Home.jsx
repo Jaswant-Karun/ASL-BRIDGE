@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { translateText } from '../services/api';
 import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
@@ -8,20 +8,74 @@ export default function Home({ navigate, user }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [listening, setListening] = useState(false);
 
-  async function submit(event) {
-    if (event) event.preventDefault();
-    if (!text.trim()) return;
+  const recognitionRef = useRef(null);
+  const autoSubmitTimerRef = useRef(null);
+
+  // ---------- translation ----------
+  const runTranslation = useCallback(async (sentence) => {
+    if (!sentence.trim()) return;
     setLoading(true);
     setError('');
     try {
-      const translation = await translateText(text.trim());
+      const translation = await translateText(sentence.trim());
       setResult(translation);
-    } catch (translationError) {
-      setError(translationError.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  async function submit(event) {
+    if (event) event.preventDefault();
+    runTranslation(text);
+  }
+
+  // ---------- speech input ----------
+  const supported =
+    typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+  function startListening() {
+    if (!supported) return;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new Recognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => setListening(true);
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join('');
+      setText(transcript);
+
+      // Auto-submit 1.2 s after the user stops talking
+      if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+      autoSubmitTimerRef.current = setTimeout(() => {
+        runTranslation(transcript);
+      }, 1200);
+    };
+
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }
+
+  function stopListening() {
+    recognitionRef.current?.stop();
+    setListening(false);
+    if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+  }
+
+  function toggleListening() {
+    listening ? stopListening() : startListening();
   }
 
   const activeSentence = result?.originalText || text;
@@ -48,14 +102,39 @@ export default function Home({ navigate, user }) {
             <span className="telemetry-pill">● AnimateDiff 3D Engine Active</span>
           </div>
 
-          <textarea
-            id="translation-text"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            rows="3"
-            placeholder="Type any sentence..."
-            className="rainbow-textarea"
-          />
+          <div className="textarea-mic-row">
+            <textarea
+              id="translation-text"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              rows="3"
+              placeholder="Type or speak a sentence…"
+              className="rainbow-textarea"
+            />
+
+            {/* Microphone button */}
+            <button
+              type="button"
+              className={`mic-btn ${listening ? 'mic-btn--active' : ''}`}
+              onClick={toggleListening}
+              disabled={!supported}
+              title={supported ? (listening ? 'Stop microphone' : 'Start microphone') : 'Speech recognition not supported'}
+              aria-label={listening ? 'Stop listening' : 'Start microphone'}
+            >
+              {listening ? (
+                <>
+                  <span className="mic-pulse-ring" />
+                  <span className="mic-icon">🎙️</span>
+                  <span className="mic-label">Listening…</span>
+                </>
+              ) : (
+                <>
+                  <span className="mic-icon">🎤</span>
+                  <span className="mic-label">Speak</span>
+                </>
+              )}
+            </button>
+          </div>
 
           <div className="form-action-row">
             <button
@@ -72,27 +151,21 @@ export default function Home({ navigate, user }) {
               <button
                 type="button"
                 className="sample-pill-btn"
-                onClick={() => {
-                  setText('Tomorrow I am going to college because I have an important project review.');
-                }}
+                onClick={() => setText('Tomorrow I am going to college because I have an important project review.')}
               >
                 Tomorrow College Review
               </button>
               <button
                 type="button"
                 className="sample-pill-btn"
-                onClick={() => {
-                  setText('Hello everyone, my name is Jashwan Karan.');
-                }}
+                onClick={() => setText('Hello everyone, my name is Jashwan Karan.')}
               >
                 Hello My Name Jashwan
               </button>
               <button
                 type="button"
                 className="sample-pill-btn"
-                onClick={() => {
-                  setText('Good morning what to do next to learn computer science.');
-                }}
+                onClick={() => setText('Good morning what to do next to learn computer science.')}
               >
                 Good Morning Computer Science
               </button>
@@ -103,7 +176,7 @@ export default function Home({ navigate, user }) {
         {error && <p className="error-message" role="alert">{error}</p>}
       </section>
 
-      {/* Integrated AnimateDiff 3D Studio (Directly inside Text to ASL) */}
+      {/* Integrated AnimateDiff 3D Studio */}
       <section className="integrated-animatediff-section">
         <AnimateDiffStudio
           initialText={activeSentence}
@@ -116,7 +189,6 @@ export default function Home({ navigate, user }) {
           animatediffData={result?.animatediff || null}
           datasetGestures={result?.datasetGestures || null}
         />
-
       </section>
 
       {/* Rainbow Architecture Diagram Flow */}

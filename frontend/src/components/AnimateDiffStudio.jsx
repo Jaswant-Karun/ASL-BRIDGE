@@ -5,6 +5,7 @@ import AnimateDiffMotionVideoEngine from './AnimateDiffMotionVideoEngine';
 import AnimateDiffVideoSynthesizer from './AnimateDiffVideoSynthesizer';
 import LiveCaptionBanner from './LiveCaptionBanner';
 import ASLGestureDatasetViewer from './ASLGestureDatasetViewer';
+import GestureStrip from './GestureStrip';
 import { avatarSpeech } from '../utils/speechSynthesis';
 
 const DEFAULT_AVATARS = [
@@ -565,77 +566,13 @@ export default function AnimateDiffStudio({
           </div>
         </div>
 
-        {/* Right Side: Sign Diagnostics & Architecture Card */}
+        {/* Right Side: Live ASL Gesture Image Strip */}
         <div className="studio-sidebar-panel">
-          <div className="panel-tab-content">
-            <h4>Sign & Kinematic Diagnostics</h4>
-            {activeSign ? (
-              <div className="sign-detail-card">
-                <div className="detail-row">
-                  <span className="detail-label">Sign Concept:</span>
-                  <strong className="detail-value">{activeSign.token}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Handshape:</span>
-                  <span className="detail-value">{activeSign.handshape || 'Open 5 / Flat-B'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Signing Space:</span>
-                  <span className="detail-value">{activeSign.location || 'Torso to Neutral Forward'}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Kinematics Mode:</span>
-                  <span className="detail-value" style={{ color: '#10b981' }}>
-                    Skeletal IK/FK with Coarticulation Blending
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">3D Avatar:</span>
-                  <span className="detail-value" style={{ color: selectedAvatar.accentColor }}>
-                    {selectedAvatar.name} ({selectedAvatar.role})
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="empty-notice">Translate text above to inspect sign motion details.</p>
-            )}
-
-            {/* Architecture Explainer Card for Reviewers */}
-            <div className="reviewer-info-card">
-              <span className="reviewer-kicker">💡 SYSTEM ARCHITECTURE PROOF</span>
-              <p className="reviewer-text">
-                <strong>Why this scales:</strong> Rather than storing complete pre-recorded sentence videos, ASL Bridge breaks language into linguistic sign units, generating continuous 3D skeletal motion and finger articulation dynamically on the avatar.
-              </p>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="quick-actions-box">
-              <h5>Export & Integration</h5>
-              <div className="action-buttons-grid">
-                <a
-                  href={currentVideoSrc || '#'}
-                  download={`${activeSign?.token || 'asl_sign'}_motion.mp4`}
-                  className="action-btn"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  ⬇️ Download Active Clip
-                </a>
-                <button
-                  type="button"
-                  className="action-btn secondary"
-                  onClick={() => {
-                    if (navigator.clipboard && currentVideoSrc) {
-                      navigator.clipboard.writeText(window.location.origin + currentVideoSrc);
-                      alert('Video link copied to clipboard!');
-                    }
-                  }}
-                >
-                  🔗 Share URL
-                </button>
-              </div>
-            </div>
-          </div>
+          <GestureStrip
+            text={activeText}
+            currentSpokenWord={currentSpokenWord}
+            isSpeaking={isSpeaking}
+          />
         </div>
       </div>
     </div>
