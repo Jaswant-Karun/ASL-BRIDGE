@@ -50,7 +50,7 @@ export default function CameraMode() {
     };
     const requestModelPrediction = async (hand) => {
       const video = videoRef.current;
-      if (!video || predictionBusyRef.current || Date.now() - lastPredictionAtRef.current < 800) return;
+      if (!video || predictionBusyRef.current || Date.now() - lastPredictionAtRef.current < 200) return;
       predictionBusyRef.current = true;
       const canvas = document.createElement('canvas');
       const sourceWidth = video.videoWidth || 640;
@@ -84,18 +84,18 @@ export default function CameraMode() {
         const prediction = await response.json();
         if (!response.ok) throw new Error(prediction.error || `Recognition service returned ${response.status}.`);
         const label = String(prediction.prediction || 'UNKNOWN').toUpperCase();
-        const history = [...predictionHistoryRef.current, label].slice(-5);
+        const history = [...predictionHistoryRef.current, label].slice(-3);
         predictionHistoryRef.current = history;
         const counts = history.reduce((result, item) => ({ ...result, [item]: (result[item] || 0) + 1 }), {});
         const stableLabel = Object.entries(counts).sort((left, right) => right[1] - left[1])[0][0];
         const modelConfidence = Number(prediction.confidence || 0);
-        if (counts[stableLabel] >= 3 && modelConfidence >= 0.45) {
+        if (counts[stableLabel] >= 2 && modelConfidence >= 0.25) {
           setDetectedGesture(stableLabel);
           setConfidence(Math.round(modelConfidence * 100));
           setGestureText(`Stable model prediction: ${stableLabel}. Top matches: ${(prediction.topMatches || []).map((match) => `${match.label} (${Math.round(match.confidence * 100)}%)`).join(', ') || 'none'}.`);
           setMotionPlan(createMotionPlan(stableLabel));
         } else {
-          setGestureText('Checking several frames before confirming the letter. Hold your hand steady.');
+          setGestureText('Reading hand position…');
         }
         setPredictionError('');
       } catch (predictionError) {

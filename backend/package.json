@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "predict-server": "python scripts/predict_server.py",
+    "predict-server:start": "python scripts/predict_server.py --port 5001"
   },
   "dependencies": {
     "cors": "latest",

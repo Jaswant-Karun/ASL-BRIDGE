@@ -1,6 +1,7 @@
 faster-whisper
- tensorflow
- joblib
- numpy
- Pillow
- scikit-learn
+tensorflow
+joblib
+numpy
+Pillow
+scikit-learn
+flask

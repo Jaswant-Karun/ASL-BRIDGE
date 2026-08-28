@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev --prefix frontend & npm run dev --prefix backend",
+    "predict-server": "python backend/scripts/predict_server.py",
+    "dev:full": "npm run predict-server & npm run dev --prefix frontend & npm run dev --prefix backend",
     "install:all": "npm install --prefix frontend && npm install --prefix backend"
   }
 }
