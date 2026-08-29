@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { translateText } from '../services/api';
 import AnimateDiffMotionVideoEngine from '../components/AnimateDiffMotionVideoEngine';
+import { useAvatarDesign } from '../utils/avatarDesign';
 
-const AVATAR = { id:'marcus', name:'Marcus', badge:'High Contrast', accentColor:'#10b981' };
+const FALLBACK_AVATAR = { id:'marcus', name:'Marcus', badge:'High Contrast', accentColor:'#10b981' };
 
 const PRESET_LESSONS = [
   {
@@ -38,6 +39,8 @@ const PRESET_LESSONS = [
 ];
 
 export default function ClassroomMode() {
+  const designedAvatar = useAvatarDesign();
+  const activeAvatar   = designedAvatar || FALLBACK_AVATAR;
   const [tab,         setTab]         = useState('preset'); // 'preset' | 'custom'
   const [selectedLesson, setLesson]   = useState(0);
   const [customLines,  setCustomLines] = useState('');
@@ -142,7 +145,7 @@ export default function ClassroomMode() {
 
         {/* Avatar */}
         <div className="classroom-avatar-row">
-          <AnimateDiffMotionVideoEngine avatar={AVATAR} activeSign={{ token: gloss[0]||'HELLO' }} isPlaying={true} motionPlan={active?.motionPlan} />
+          <AnimateDiffMotionVideoEngine avatar={activeAvatar} activeSign={{ token: gloss[0]||'HELLO' }} isPlaying={true} motionPlan={active?.motionPlan} />
         </div>
 
         {error && <p className="error-message">{error}</p>}

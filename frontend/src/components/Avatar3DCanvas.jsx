@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { createASLGestureController } from '../utils/aslGestureController';
+import { useAvatarDesign } from '../utils/avatarDesign';
 
 export default function Avatar3DCanvas({
   motionPlan = null,
@@ -15,6 +16,9 @@ export default function Avatar3DCanvas({
   const [currentFrame, setCurrentFrame] = useState(0);
   const [activeToken, setActiveToken] = useState('');
   const [nonManualTag, setNonManualTag] = useState('Neutral');
+
+  // Read saved custom design so the skeletal avatar reflects Character Designer changes
+  const customAvatar = useAvatarDesign();
 
   const sceneRef = useRef(null);
   const rendererRef = useRef(null);
@@ -64,7 +68,7 @@ export default function Avatar3DCanvas({
     scene.add(rimLight);
 
     // 5. Construct 3D Digital Human Avatar Rig
-    const rig = buildAvatarRig(scene);
+    const rig = buildAvatarRig(scene, customAvatar);
     rig.gestureController = createASLGestureController(rig);
     avatarRigRef.current = rig;
 
@@ -119,7 +123,7 @@ export default function Avatar3DCanvas({
       }
       renderer.dispose();
     };
-  }, []);
+  }, [customAvatar?.customSkinHex, customAvatar?.customOutfitHex]);
 
   // Main 60 FPS Kinematics Animation Loop
   useEffect(() => {
@@ -244,19 +248,24 @@ export default function Avatar3DCanvas({
 
 /**
  * Builds the 3D Digital Human Avatar Rig (Bones, Joints, Shaders) in Three.js
+ * Accepts an optional customAvatar from the Character Designer to override colours.
  */
-function buildAvatarRig(scene) {
+function buildAvatarRig(scene, customAvatar = null) {
   const root = new THREE.Group();
   scene.add(root);
 
+  // Use Character Designer colours when available, otherwise fall back to defaults
+  const skinHex  = customAvatar?.customSkinHex   || '#f5d0b5';
+  const clothHex = customAvatar?.customOutfitHex  || '#183b3a';
+
   const skinMaterial = new THREE.MeshStandardMaterial({
-    color: 0xf5d0b5,
+    color: new THREE.Color(skinHex),
     roughness: 0.4,
     metalness: 0.1
   });
 
   const clothMaterial = new THREE.MeshStandardMaterial({
-    color: 0x183b3a,
+    color: new THREE.Color(clothHex),
     roughness: 0.6,
     metalness: 0.2
   });

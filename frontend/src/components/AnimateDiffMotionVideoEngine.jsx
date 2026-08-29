@@ -192,7 +192,7 @@ export default function AnimateDiffMotionVideoEngine({
         gltfModelRef.current = null;
       }
     };
-  }, [avatar.id]);
+  }, [avatar.id, avatar.customSkinHex, avatar.customOutfitHex, avatar.customHairHex]);
 
   // Camera presets
   useEffect(() => {
@@ -333,12 +333,17 @@ function buildCartoonAvatar(scene, avatar) {
   const root = new THREE.Group();
   scene.add(root);
 
-  // Persona Cartoon Colors
-  let skinTone = 0xf5d0b5;
+  // Persona Cartoon Colors — custom design overrides preset colours when avatar.id === 'designer'
+  let skinTone  = 0xf5d0b5;
   let hairColor = 0x2d1810;
   let shirtColor = 0x0284c7; // Vibrant cartoon blue
 
-  if (avatar.id === 'marcus') {
+  if (avatar.customSkinHex) {
+    // Designer avatar: use colours saved in the Character Designer
+    skinTone   = new THREE.Color(avatar.customSkinHex).getHex();
+    hairColor  = new THREE.Color(avatar.customHairHex   || '#1a1008').getHex();
+    shirtColor = new THREE.Color(avatar.customOutfitHex || '#1a237e').getHex();
+  } else if (avatar.id === 'marcus') {
     skinTone = 0x6e432a;
     hairColor = 0x18181b;
     shirtColor = 0x10b981; // Emerald hoodie

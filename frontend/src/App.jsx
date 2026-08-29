@@ -27,6 +27,7 @@ import StorytellingMode   from './pages/StorytellingMode';
 import ClassroomMode      from './pages/ClassroomMode';
 import FeedbackLoop       from './pages/FeedbackLoop';
 import GestureCapture     from './pages/GestureCapture';
+import AvatarDesignerPage from './pages/AvatarDesignerPage';
 
 import { recordEngagement } from './utils/engagementTracker';
 
@@ -83,6 +84,8 @@ export default function App() {
         return <DictionaryPage />;
       case 'avatars':
         return <AvatarCustomizerPage />;
+      case 'designer':
+        return <AvatarDesignerPage />;
       case 'analytics':
         return <AnalyticsPage />;
       case 'presentation':

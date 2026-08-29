@@ -7,49 +7,24 @@ import LiveCaptionBanner from './LiveCaptionBanner';
 import ASLGestureDatasetViewer from './ASLGestureDatasetViewer';
 import GestureStrip from './GestureStrip';
 import { avatarSpeech } from '../utils/speechSynthesis';
+import { buildAvatarFromDesign } from '../utils/avatarDesign';
 
-const DEFAULT_AVATARS = [
-  {
-    id: 'sarah',
-    name: 'Sarah',
-    role: 'Studio ASL Interpreter',
-    badge: 'Photorealistic',
-    avatarImage: '/assets/avatars/sarah.png',
-    lighting: 'Soft Studio Three-Point Lighting',
-    description: 'Photorealistic certified ASL interpreter with natural facial grammar and clear hand gestures.',
-    accentColor: '#e26d4d'
-  },
-  {
-    id: 'alex',
-    name: 'Alex',
-    role: '3D Next-Gen Digital Human',
-    badge: '3D Hyper-Real',
-    avatarImage: '/assets/avatars/alex.png',
-    lighting: 'Volumetric Cinematic Lighting',
-    description: 'Hyper-detailed 3D digital human engineered for precision hand articulation.',
-    accentColor: '#38bdf8'
-  },
-  {
-    id: 'maya',
-    name: 'Maya',
-    role: 'Stylized Anime Signer',
-    badge: 'Anime / Stylized',
-    avatarImage: '/assets/avatars/maya.png',
-    lighting: 'Vibrant Sunlight Glow',
-    description: 'Vibrant stylized anime aesthetic with dynamic micro-expressions and high-contrast lines.',
-    accentColor: '#ec4899'
-  },
-  {
-    id: 'marcus',
-    name: 'Marcus',
-    role: 'High-Contrast Interpreter',
-    badge: 'High Contrast',
-    avatarImage: '/assets/avatars/marcus.png',
-    lighting: 'High-Luminance Edge Contrast',
-    description: 'Optimized for low-vision accessibility with high-contrast luminance and bold gesture silhouettes.',
-    accentColor: '#10b981'
+// Build the DEFAULT_AVATARS list, prepending the designer avatar if one is saved
+function buildDefaultAvatars() {
+  const base = [
+    { id:'sarah',  name:'Sarah',  role:'Studio ASL Interpreter',   badge:'Photorealistic',   avatarImage:'/assets/avatars/sarah.png',  lighting:'Soft Studio Three-Point Lighting',    description:'Photorealistic certified ASL interpreter with natural facial grammar and clear hand gestures.', accentColor:'#e26d4d' },
+    { id:'alex',   name:'Alex',   role:'3D Next-Gen Digital Human', badge:'3D Hyper-Real',    avatarImage:'/assets/avatars/alex.png',   lighting:'Volumetric Cinematic Lighting',        description:'Hyper-detailed 3D digital human engineered for precision hand articulation.',                    accentColor:'#38bdf8' },
+    { id:'maya',   name:'Maya',   role:'Stylized Anime Signer',     badge:'Anime / Stylized', avatarImage:'/assets/avatars/maya.png',   lighting:'Vibrant Sunlight Glow',               description:'Vibrant stylized anime aesthetic with dynamic micro-expressions and high-contrast lines.',        accentColor:'#ec4899' },
+    { id:'marcus', name:'Marcus', role:'High-Contrast Interpreter', badge:'High Contrast',    avatarImage:'/assets/avatars/marcus.png', lighting:'High-Luminance Edge Contrast',         description:'Optimized for low-vision accessibility with high-contrast luminance and bold gesture silhouettes.', accentColor:'#10b981' },
+  ];
+  const designer = buildAvatarFromDesign();
+  if (designer) {
+    return [{ ...designer, avatarImage: '/assets/avatars/marcus.png', lighting: 'Character Designer', description: 'Your custom character from the Character Designer.' }, ...base];
   }
-];
+  return base;
+}
+
+const DEFAULT_AVATARS = buildDefaultAvatars();
 
 export default function AnimateDiffStudio({
   initialText = '',
@@ -64,7 +39,10 @@ export default function AnimateDiffStudio({
   onAvatarChange = null
 }) {
   const [avatars, setAvatars] = useState(DEFAULT_AVATARS);
-  const [selectedAvatarId, setSelectedAvatarId] = useState('sarah');
+  // Auto-select the designer avatar if one has been saved
+  const [selectedAvatarId, setSelectedAvatarId] = useState(
+    () => buildAvatarFromDesign() ? 'designer' : 'sarah'
+  );
   const [currentSignIndex, setCurrentSignIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -97,6 +75,17 @@ export default function AnimateDiffStudio({
         if (res.avatars && res.avatars.length > 0) setAvatars(res.avatars);
       })
       .catch(() => {});
+  }, []);
+
+  // Refresh the designer avatar entry whenever the user saves a new design
+  useEffect(() => {
+    const refresh = () => {
+      const updated = buildDefaultAvatars();
+      setAvatars(updated);
+      setSelectedAvatarId('designer');
+    };
+    window.addEventListener('avatar-design-saved', refresh);
+    return () => window.removeEventListener('avatar-design-saved', refresh);
   }, []);
 
   const activeSequences =

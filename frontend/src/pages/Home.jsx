@@ -1,28 +1,16 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { translateText } from '../services/api';
 import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
 import { logTranslation } from './AnalyticsPage';
 
 export default function Home({ navigate, user }) {
-  const [text, setText] = useState('');   // empty on load — user types first
-  const [result, setResult] = useState(null);
-  const [submitted, setSubmitted] = useState(false); // tracks whether user has ever submitted
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  function copyText() {
-    if (!text.trim()) return;
-    navigator.clipboard?.writeText(text.trim()).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  const recognitionRef = useRef(null);
-  const autoSubmitTimerRef = useRef(null);
+  const [text,      setText]      = useState('');
+  const [result,    setResult]    = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [error,     setError]     = useState('');
+  const [loading,   setLoading]   = useState(false);
+  const [copied,    setCopied]    = useState(false);
 
   // ---------- translation ----------
   const runTranslation = useCallback(async (sentence) => {
@@ -41,59 +29,33 @@ export default function Home({ navigate, user }) {
     }
   }, []);
 
-  async function submit(event) {
+  function submit(event) {
     if (event) event.preventDefault();
     setSubmitted(true);
     runTranslation(text);
   }
 
-  // ---------- speech input ----------
-  const supported =
-    typeof window !== 'undefined' &&
-    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
-
-  function startListening() {
-    if (!supported) return;
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new Recognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => setListening(true);
-
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((r) => r[0].transcript)
-        .join('');
-      setText(transcript);
-
-      // Auto-submit 1.2 s after the user stops talking
-      if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
-      autoSubmitTimerRef.current = setTimeout(() => {
-        setSubmitted(true);
-        runTranslation(transcript);
-      }, 1200);
-    };
-
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
-
-    recognitionRef.current = recognition;
-    recognition.start();
+  // ---------- helpers ----------
+  function copyText() {
+    if (!text.trim()) return;
+    navigator.clipboard?.writeText(text.trim()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
-  function stopListening() {
-    recognitionRef.current?.stop();
-    setListening(false);
-    if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
+  function clearText() {
+    setText('');
+    setResult(null);
+    setSubmitted(false);
+    setError('');
   }
 
-  function toggleListening() {
-    listening ? stopListening() : startListening();
+  function loadSample(sample) {
+    setText(sample);
+    setSubmitted(true);
+    runTranslation(sample);
   }
-
-  const activeSentence = result?.originalText || text;
 
   return (
     <div className="home-workspace-page">
@@ -117,50 +79,36 @@ export default function Home({ navigate, user }) {
             <span className="telemetry-pill">● AnimateDiff 3D Engine Active</span>
           </div>
 
-          <div className="textarea-mic-row">
-            <textarea
-              id="translation-text"
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              rows="3"
-              placeholder="Type or speak a sentence…"
-              className="rainbow-textarea"
-            />
+          <textarea
+            id="translation-text"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            rows="3"
+            placeholder="Type a sentence…"
+            className="rainbow-textarea"
+          />
 
-            {/* Microphone button */}
-            <button
-              type="button"
-              className={`mic-btn ${listening ? 'mic-btn--active' : ''}`}
-              onClick={toggleListening}
-              disabled={!supported}
-              title={supported ? (listening ? 'Stop microphone' : 'Start microphone') : 'Speech recognition not supported'}
-              aria-label={listening ? 'Stop listening' : 'Start microphone'}
-            >
-              {listening ? (
-                <>
-                  <span className="mic-pulse-ring" />
-                  <span className="mic-icon">🎙️</span>
-                  <span className="mic-label">Listening…</span>
-                </>
-              ) : (
-                <>
-                  <span className="mic-icon">🎤</span>
-                  <span className="mic-label">Speak</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Char count + copy */}
+          {/* Meta bar: char count + copy + clear */}
           <div className="home-meta-bar">
-            <span className="char-count-pill">{text.length} chars · {text.trim().split(/\s+/).filter(Boolean).length} words</span>
+            <span className="char-count-pill">
+              {text.length} chars · {text.trim().split(/\s+/).filter(Boolean).length} words
+            </span>
             <button
               type="button"
               className={`copy-sentence-btn ${copied ? 'copy-sentence-btn--copied' : ''}`}
               onClick={copyText}
               disabled={!text.trim()}
             >
-              {copied ? '✓ Copied!' : '⎘ Copy text'}
+              {copied ? '✓ Copied!' : '⎘ Copy'}
+            </button>
+            <button
+              type="button"
+              className="clear-text-btn"
+              onClick={clearText}
+              disabled={!text.trim() && !submitted}
+              title="Clear text and reset"
+            >
+              ✕ Clear
             </button>
           </div>
 
@@ -176,25 +124,16 @@ export default function Home({ navigate, user }) {
             {/* Quick Sample Prompts */}
             <div className="quick-samples-row">
               <span className="sample-label">Try:</span>
-              <button
-                type="button"
-                className="sample-pill-btn"
-                onClick={() => { setText('Tomorrow I am going to college because I have an important project review.'); setSubmitted(true); runTranslation('Tomorrow I am going to college because I have an important project review.'); }}
-              >
+              <button type="button" className="sample-pill-btn"
+                onClick={() => loadSample('Tomorrow I am going to college because I have an important project review.')}>
                 Tomorrow College Review
               </button>
-              <button
-                type="button"
-                className="sample-pill-btn"
-                onClick={() => { setText('Hello everyone, my name is Jashwan Karan.'); setSubmitted(true); runTranslation('Hello everyone, my name is Jashwan Karan.'); }}
-              >
+              <button type="button" className="sample-pill-btn"
+                onClick={() => loadSample('Hello everyone, my name is Jashwan Karan.')}>
                 Hello My Name Jashwan
               </button>
-              <button
-                type="button"
-                className="sample-pill-btn"
-                onClick={() => { setText('Good morning what to do next to learn computer science.'); setSubmitted(true); runTranslation('Good morning what to do next to learn computer science.'); }}
-              >
+              <button type="button" className="sample-pill-btn"
+                onClick={() => loadSample('Good morning what to do next to learn computer science.')}>
                 Good Morning Computer Science
               </button>
             </div>
@@ -204,7 +143,7 @@ export default function Home({ navigate, user }) {
         {error && <p className="error-message" role="alert">{error}</p>}
       </section>
 
-      {/* Integrated AnimateDiff 3D Studio — only shown after user submits */}
+      {/* Studio — only shown after submit */}
       {submitted && (
         <section className="integrated-animatediff-section">
           <AnimateDiffStudio
@@ -221,7 +160,7 @@ export default function Home({ navigate, user }) {
         </section>
       )}
 
-      {/* Placeholder shown before first submit */}
+      {/* Placeholder before first submit */}
       {!submitted && (
         <section className="home-pre-submit-hint">
           <div className="pre-submit-card">
@@ -232,7 +171,7 @@ export default function Home({ navigate, user }) {
         </section>
       )}
 
-      {/* Rainbow Architecture Diagram Flow */}
+      {/* Architecture diagram */}
       <section className="pipeline-flow-section" style={{ marginTop: '2rem' }}>
         <RainbowPipelineDiagram activeStep="avatar" />
       </section>

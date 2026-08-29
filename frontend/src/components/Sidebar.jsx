@@ -22,7 +22,8 @@ export default function Sidebar({
     { id: 'camera', label: 'Live Camera ASL', icon: '📹', tag: 'Vision' },
     { id: 'presentation', label: 'PPT to ASL Flow', icon: '📚', tag: 'Slides' },
     { id: 'dictionary', label: 'ASL 3D Dictionary', icon: '🧠', tag: 'Library' },
-    { id: 'avatars', label: 'Avatar Training Lab', icon: '👥', tag: 'Rig' },
+    { id: 'avatars',  label: 'Avatar Training Lab',   icon: '👥', tag: 'Rig' },
+    { id: 'designer', label: 'Character Designer',     icon: '🎨', tag: 'Create' },
     { id: 'maps', label: 'ASL Maps & Resources', icon: '🗺️', tag: 'Explore' }
   ];
 
