@@ -5669,3 +5669,54 @@ body {
 .capture-gallery-label { font-size:0.82rem; font-weight:800; color:var(--ink); }
 .capture-gallery-conf { font-size:0.65rem; font-weight:700; }
 @media(max-width:700px){ .capture-layout{grid-template-columns:1fr;} .capture-compare-grid{grid-template-columns:1fr 1fr;} }
+
+/* ==========================================================================
+   HOME — pre-submit placeholder (shown before first translation)
+   ========================================================================== */
+
+.home-pre-submit-hint {
+  margin-top: 2rem;
+}
+
+.pre-submit-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 2rem;
+  background: var(--panel, #0c1a30);
+  border: 2px dashed var(--line, rgba(56,189,248,0.18));
+  border-radius: 16px;
+  text-align: center;
+  color: var(--muted, #94a3b8);
+}
+
+.pre-submit-icon {
+  font-size: 3rem;
+  line-height: 1;
+  opacity: 0.5;
+}
+
+.pre-submit-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink, #f8fafc);
+}
+
+.pre-submit-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.light-theme .pre-submit-card {
+  background: #ffffff;
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.light-theme .pre-submit-card h3 {
+  color: #0f172a;
+}

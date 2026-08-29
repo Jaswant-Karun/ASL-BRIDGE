@@ -569,7 +569,7 @@ export default function AnimateDiffStudio({
         {/* Right Side: Live ASL Gesture Image Strip */}
         <div className="studio-sidebar-panel">
           <GestureStrip
-            text={activeText}
+            text={gloss && gloss.length > 0 ? activeText : ''}
             currentSpokenWord={currentSpokenWord}
             isSpeaking={isSpeaking}
           />

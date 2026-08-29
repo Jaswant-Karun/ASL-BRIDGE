@@ -4,8 +4,9 @@ import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
 
 export default function Home({ navigate, user }) {
-  const [text, setText] = useState('Tomorrow I am going to college because I have an important project review.');
+  const [text, setText] = useState('');   // empty on load — user types first
   const [result, setResult] = useState(null);
+  const [submitted, setSubmitted] = useState(false); // tracks whether user has ever submitted
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
@@ -39,6 +40,7 @@ export default function Home({ navigate, user }) {
 
   async function submit(event) {
     if (event) event.preventDefault();
+    setSubmitted(true);
     runTranslation(text);
   }
 
@@ -66,6 +68,7 @@ export default function Home({ navigate, user }) {
       // Auto-submit 1.2 s after the user stops talking
       if (autoSubmitTimerRef.current) clearTimeout(autoSubmitTimerRef.current);
       autoSubmitTimerRef.current = setTimeout(() => {
+        setSubmitted(true);
         runTranslation(transcript);
       }, 1200);
     };
@@ -173,21 +176,21 @@ export default function Home({ navigate, user }) {
               <button
                 type="button"
                 className="sample-pill-btn"
-                onClick={() => setText('Tomorrow I am going to college because I have an important project review.')}
+                onClick={() => { setText('Tomorrow I am going to college because I have an important project review.'); setSubmitted(true); runTranslation('Tomorrow I am going to college because I have an important project review.'); }}
               >
                 Tomorrow College Review
               </button>
               <button
                 type="button"
                 className="sample-pill-btn"
-                onClick={() => setText('Hello everyone, my name is Jashwan Karan.')}
+                onClick={() => { setText('Hello everyone, my name is Jashwan Karan.'); setSubmitted(true); runTranslation('Hello everyone, my name is Jashwan Karan.'); }}
               >
                 Hello My Name Jashwan
               </button>
               <button
                 type="button"
                 className="sample-pill-btn"
-                onClick={() => setText('Good morning what to do next to learn computer science.')}
+                onClick={() => { setText('Good morning what to do next to learn computer science.'); setSubmitted(true); runTranslation('Good morning what to do next to learn computer science.'); }}
               >
                 Good Morning Computer Science
               </button>
@@ -198,20 +201,33 @@ export default function Home({ navigate, user }) {
         {error && <p className="error-message" role="alert">{error}</p>}
       </section>
 
-      {/* Integrated AnimateDiff 3D Studio */}
-      <section className="integrated-animatediff-section">
-        <AnimateDiffStudio
-          initialText={activeSentence}
-          gloss={result?.gloss || ['TOMORROW', 'ME', 'COLLEGE', 'GO', 'WHY', 'ME', 'HAVE', 'IMPORTANT', 'PROJECT', 'REVIEW']}
-          animations={result?.animations || []}
-          unsupported={result?.unsupported || []}
-          motionPlan={result?.motionPlan || null}
-          linguisticStructure={result?.linguisticStructure || null}
-          nonManualMarkers={result?.nonManualMarkers || []}
-          animatediffData={result?.animatediff || null}
-          datasetGestures={result?.datasetGestures || null}
-        />
-      </section>
+      {/* Integrated AnimateDiff 3D Studio — only shown after user submits */}
+      {submitted && (
+        <section className="integrated-animatediff-section">
+          <AnimateDiffStudio
+            initialText={result?.originalText || text}
+            gloss={result?.gloss || []}
+            animations={result?.animations || []}
+            unsupported={result?.unsupported || []}
+            motionPlan={result?.motionPlan || null}
+            linguisticStructure={result?.linguisticStructure || null}
+            nonManualMarkers={result?.nonManualMarkers || []}
+            animatediffData={result?.animatediff || null}
+            datasetGestures={result?.datasetGestures || null}
+          />
+        </section>
+      )}
+
+      {/* Placeholder shown before first submit */}
+      {!submitted && (
+        <section className="home-pre-submit-hint">
+          <div className="pre-submit-card">
+            <span className="pre-submit-icon">✋</span>
+            <h3>Type a sentence above and click Generate</h3>
+            <p>The 3D avatar and ASL hand gesture images will appear here after you submit your first sentence.</p>
+          </div>
+        </section>
+      )}
 
       {/* Rainbow Architecture Diagram Flow */}
       <section className="pipeline-flow-section" style={{ marginTop: '2rem' }}>

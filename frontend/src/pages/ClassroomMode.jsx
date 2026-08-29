@@ -64,7 +64,8 @@ export default function ClassroomMode() {
     finally { setLoading(false); }
   }, [lines, results]);
 
-  useEffect(() => { loadLine(0, lines); }, [lines]); // auto-load first line
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadLine(0, lines); }, [lines]); // auto-load first line when lines change
 
   function buildCustom() {
     const custom = customLines.split('\n').map((l) => l.trim()).filter(Boolean);
