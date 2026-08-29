@@ -92,6 +92,7 @@ export default function Sidebar({
             <span className="nav-icon">{item.icon}</span>
             {!isCollapsed && <span className="nav-label">{item.label}</span>}
             {!isCollapsed && <span className="nav-tag">{item.tag}</span>}
+            {currentPage === item.id && <span className="nav-active-dot" aria-hidden="true" />}
           </button>
         ))}
 
@@ -107,6 +108,7 @@ export default function Sidebar({
             <span className="nav-icon">{item.icon}</span>
             {!isCollapsed && <span className="nav-label">{item.label}</span>}
             {!isCollapsed && <span className="nav-tag">{item.tag}</span>}
+            {currentPage === item.id && <span className="nav-active-dot" aria-hidden="true" />}
           </button>
         ))}
 
@@ -122,6 +124,7 @@ export default function Sidebar({
             <span className="nav-icon">{item.icon}</span>
             {!isCollapsed && <span className="nav-label">{item.label}</span>}
             {!isCollapsed && <span className="nav-tag">{item.tag}</span>}
+            {currentPage === item.id && <span className="nav-active-dot" aria-hidden="true" />}
           </button>
         ))}
       </nav>

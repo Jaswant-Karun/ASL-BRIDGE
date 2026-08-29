@@ -4,6 +4,7 @@ import RainbowAudioVisualizer from '../components/RainbowAudioVisualizer';
 import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
 import { avatarSpeech } from '../utils/speechSynthesis';
+import { logTranslation } from './AnalyticsPage';
 
 export default function SpeechStudio() {
   const [isRecording, setIsRecording] = useState(false);
@@ -201,7 +202,9 @@ export default function SpeechStudio() {
     setSpeechNotice('');
     setIsLoading(true);
     try {
+      const t0 = Date.now();
       const res = await translateText(text);
+      logTranslation(text, res.gloss || [], Date.now() - t0);
       setTranslationResult(res);
     } catch (err) {
       console.error('Translation error:', err);
@@ -372,21 +375,30 @@ export default function SpeechStudio() {
         </div>
       </section>
 
-      {/* Integrated AnimateDiff 3D Studio (Directly inside Speech to ASL) */}
-      <section className="integrated-animatediff-section">
-        <AnimateDiffStudio
-          initialText={translationResult?.originalText || ''}
-          gloss={translationResult?.gloss || []}
-          animations={translationResult?.animations || []}
-          unsupported={translationResult?.unsupported || []}
-          motionPlan={translationResult?.motionPlan || null}
-          linguisticStructure={translationResult?.linguisticStructure || null}
-          nonManualMarkers={translationResult?.nonManualMarkers || []}
-          animatediffData={translationResult?.animatediff || null}
-          datasetGestures={translationResult?.datasetGestures || null}
-        />
-
-      </section>
+      {/* Integrated AnimateDiff 3D Studio — only shown after a translation result */}
+      {translationResult ? (
+        <section className="integrated-animatediff-section">
+          <AnimateDiffStudio
+            initialText={translationResult?.originalText || ''}
+            gloss={translationResult?.gloss || []}
+            animations={translationResult?.animations || []}
+            unsupported={translationResult?.unsupported || []}
+            motionPlan={translationResult?.motionPlan || null}
+            linguisticStructure={translationResult?.linguisticStructure || null}
+            nonManualMarkers={translationResult?.nonManualMarkers || []}
+            animatediffData={translationResult?.animatediff || null}
+            datasetGestures={translationResult?.datasetGestures || null}
+          />
+        </section>
+      ) : (
+        <section className="home-pre-submit-hint">
+          <div className="pre-submit-card">
+            <span className="pre-submit-icon">🎙️</span>
+            <h3>Click Start Recording and speak a sentence</h3>
+            <p>The 3D avatar and ASL gesture images will appear here after your speech is translated.</p>
+          </div>
+        </section>
+      )}
 
       {/* Rainbow Architecture Diagram */}
       <section className="pipeline-flow-section" style={{ marginTop: '2rem' }}>

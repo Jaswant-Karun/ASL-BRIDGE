@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { translateText } from '../services/api';
 import AnimateDiffStudio from '../components/AnimateDiffStudio';
 import RainbowPipelineDiagram from '../components/RainbowPipelineDiagram';
+import { logTranslation } from './AnalyticsPage';
 
 export default function Home({ navigate, user }) {
   const [text, setText] = useState('');   // empty on load — user types first
@@ -29,7 +30,9 @@ export default function Home({ navigate, user }) {
     setLoading(true);
     setError('');
     try {
+      const t0 = Date.now();
       const translation = await translateText(sentence.trim());
+      logTranslation(sentence.trim(), translation.gloss || [], Date.now() - t0);
       setResult(translation);
     } catch (err) {
       setError(err.message);
