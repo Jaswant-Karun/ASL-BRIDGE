@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import AnimateDiffMotionVideoEngine from '../components/AnimateDiffMotionVideoEngine';
+import { useAvatarDesign } from '../utils/avatarDesign';
+
+const FALLBACK_DICT_AVATAR = { id:'alex', name:'Alex', badge:'Tech Cyan Cartoon', accentColor:'#38bdf8' };
 
 export default function DictionaryPage() {
+  const designedAvatar  = useAvatarDesign();
+  const dictAvatar      = designedAvatar || FALLBACK_DICT_AVATAR;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSign, setSelectedSign] = useState('HELLO');
   const [activeLetter, setActiveLetter] = useState('A');
@@ -116,12 +121,7 @@ export default function DictionaryPage() {
 
           <div className="preview-canvas-wrapper" style={{ display: 'grid', gridTemplateColumns: selectedSign.length === 1 ? '1fr 180px' : '1fr', gap: '1rem' }}>
             <AnimateDiffMotionVideoEngine
-              avatar={{
-                id: 'alex',
-                name: 'Alex',
-                badge: 'Tech Cyan Cartoon',
-                accentColor: '#38bdf8'
-              }}
+              avatar={dictAvatar}
               activeSign={{ token: selectedSign }}
               isPlaying={true}
             />

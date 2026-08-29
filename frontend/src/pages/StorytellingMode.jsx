@@ -2,14 +2,17 @@ import React, { useState, useCallback } from 'react';
 import { translateText } from '../services/api';
 import AnimateDiffMotionVideoEngine from '../components/AnimateDiffMotionVideoEngine';
 import GestureStrip from '../components/GestureStrip';
+import { useAvatarDesign } from '../utils/avatarDesign';
 
-const AVATAR = { id:'sarah', name:'Sarah', badge:'Studio ASL', accentColor:'#e26d4d' };
+const FALLBACK_AVATAR = { id:'sarah', name:'Sarah', badge:'Studio ASL', accentColor:'#e26d4d' };
 const SAMPLES = [
   `Once upon a time there was a student who loved computer science. Every morning she went to college. She worked on an important project. Her teacher was very proud of her progress.`,
   `Hello everyone. Today I want to teach you about sign language. First you learn the alphabet. Then you practice every day. Soon you will understand ASL very well.`,
 ];
 
 export default function StorytellingMode() {
+  const designedAvatar = useAvatarDesign();
+  const activeAvatar   = designedAvatar || FALLBACK_AVATAR;
   const [story,       setStory]       = useState('');
   const [sentences,   setSentences]   = useState([]);
   const [activeIdx,   setActiveIdx]   = useState(0);
@@ -129,7 +132,7 @@ export default function StorytellingMode() {
                     {gloss.map((g,i) => <span key={i} className="gloss-chip">{g}</span>)}
                   </div>
                 </div>
-                <AnimateDiffMotionVideoEngine avatar={AVATAR} activeSign={{ token: gloss[0] || 'HELLO' }} isPlaying={true} motionPlan={active.motionPlan} />
+                <AnimateDiffMotionVideoEngine avatar={activeAvatar} activeSign={{ token: gloss[0] || 'HELLO' }} isPlaying={true} motionPlan={active.motionPlan} />
                 <div style={{marginTop:'1rem'}}>
                   <GestureStrip text={sentences[activeIdx]} isSpeaking={false} />
                 </div>

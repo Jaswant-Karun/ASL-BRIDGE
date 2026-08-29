@@ -458,6 +458,7 @@ export default function AvatarDesignerPage() {
   const [design, setDesign] = useState(loadDesign);
   const [activeCategory, setActiveCategory] = useState('body');
   const [copied, setCopied] = useState(false);
+  const [saved,  setSaved]  = useState(false);  // toast state for Save button
 
   const mountRef      = useRef(null);
   const sceneRef      = useRef(null);
@@ -474,6 +475,8 @@ export default function AvatarDesignerPage() {
     setDesign(prev => {
       const next = { ...prev, ...partial };
       saveDesign(next);
+      // Broadcast to all pages so the avatar updates immediately on every change
+      window.dispatchEvent(new CustomEvent('avatar-design-saved', { detail: next }));
       return next;
     });
   }, []);
@@ -612,6 +615,15 @@ export default function AvatarDesignerPage() {
   function exportDesign() {
     const code = JSON.stringify(design, null, 2);
     navigator.clipboard?.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  }
+
+  /** Persist current design AND broadcast to all listening components/pages */
+  function saveAndBroadcast() {
+    saveDesign(design);
+    // Notify every hook/component subscribed to 'avatar-design-saved'
+    window.dispatchEvent(new CustomEvent('avatar-design-saved', { detail: design }));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   }
 
   // ── Panel renderers ────────────────────────────────────────────────────────
@@ -837,6 +849,18 @@ export default function AvatarDesignerPage() {
           <button type="button" className="designer-reset-btn" onClick={resetDesign}>↺ Reset</button>
           <button type="button" className={`copy-sentence-btn ${copied?'copy-sentence-btn--copied':''}`} onClick={exportDesign}>
             {copied ? '✓ Copied!' : '⎘ Export JSON'}
+          </button>
+          {/* Primary Save button — persists design + broadcasts to all pages */}
+          <button
+            type="button"
+            className={`designer-save-btn ${saved ? 'designer-save-btn--saved' : ''}`}
+            onClick={saveAndBroadcast}
+          >
+            {saved ? (
+              <><span className="save-check">✓</span> Saved to all pages!</>
+            ) : (
+              <><span className="save-icon">💾</span> Save Design</>
+            )}
           </button>
         </div>
       </header>

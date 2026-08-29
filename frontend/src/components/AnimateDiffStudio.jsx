@@ -9,7 +9,7 @@ import GestureStrip from './GestureStrip';
 import { avatarSpeech } from '../utils/speechSynthesis';
 import { buildAvatarFromDesign } from '../utils/avatarDesign';
 
-// Build the DEFAULT_AVATARS list, prepending the designer avatar if one is saved
+// Build the DEFAULT_AVATARS list — always called fresh, never cached as a module constant
 function buildDefaultAvatars() {
   const base = [
     { id:'sarah',  name:'Sarah',  role:'Studio ASL Interpreter',   badge:'Photorealistic',   avatarImage:'/assets/avatars/sarah.png',  lighting:'Soft Studio Three-Point Lighting',    description:'Photorealistic certified ASL interpreter with natural facial grammar and clear hand gestures.', accentColor:'#e26d4d' },
@@ -24,8 +24,6 @@ function buildDefaultAvatars() {
   return base;
 }
 
-const DEFAULT_AVATARS = buildDefaultAvatars();
-
 export default function AnimateDiffStudio({
   initialText = '',
   gloss = [],
@@ -38,7 +36,7 @@ export default function AnimateDiffStudio({
   datasetGestures = null,
   onAvatarChange = null
 }) {
-  const [avatars, setAvatars] = useState(DEFAULT_AVATARS);
+  const [avatars, setAvatars] = useState(() => buildDefaultAvatars());
   // Auto-select the designer avatar if one has been saved
   const [selectedAvatarId, setSelectedAvatarId] = useState(
     () => buildAvatarFromDesign() ? 'designer' : 'sarah'
@@ -72,7 +70,15 @@ export default function AnimateDiffStudio({
   useEffect(() => {
     getAvatars()
       .then((res) => {
-        if (res.avatars && res.avatars.length > 0) setAvatars(res.avatars);
+        if (res.avatars && res.avatars.length > 0) {
+          // Preserve the designer avatar entry on top if a design is saved
+          const designer = buildAvatarFromDesign();
+          const serverList = res.avatars;
+          setAvatars(designer
+            ? [{ ...designer, avatarImage: '/assets/avatars/marcus.png', lighting: 'Character Designer', description: 'Your custom character from the Character Designer.' }, ...serverList]
+            : serverList
+          );
+        }
       })
       .catch(() => {});
   }, []);
@@ -84,8 +90,14 @@ export default function AnimateDiffStudio({
       setAvatars(updated);
       setSelectedAvatarId('designer');
     };
+    // Also handle cross-tab storage changes
+    const onStorage = (e) => { if (e.key === 'avatar-design') refresh(); };
     window.addEventListener('avatar-design-saved', refresh);
-    return () => window.removeEventListener('avatar-design-saved', refresh);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('avatar-design-saved', refresh);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   const activeSequences =

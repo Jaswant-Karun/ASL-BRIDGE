@@ -130,9 +130,17 @@ export function useAvatarDesign() {
   const [avatar, setAvatar] = useState(() => buildAvatarFromDesign());
 
   useEffect(() => {
-    const refresh = () => setAvatar(buildAvatarFromDesign());
-    window.addEventListener('avatar-design-saved', refresh);
-    return () => window.removeEventListener('avatar-design-saved', refresh);
+    // Also refresh whenever storage changes in another tab
+    const onStorage = (e) => {
+      if (e.key === 'avatar-design') setAvatar(buildAvatarFromDesign());
+    };
+    const onSaved = () => setAvatar(buildAvatarFromDesign());
+    window.addEventListener('avatar-design-saved', onSaved);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('avatar-design-saved', onSaved);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   return avatar;   // null = no saved design → use page default

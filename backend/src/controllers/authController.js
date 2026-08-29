@@ -8,22 +8,45 @@ function buildUsername(name, email) {
 }
 
 function publicUser(user) {
-  return { id: user.id, publicId: user.publicId, username: user.username, name: user.name, email: user.email };
+  return {
+    id: user.id,
+    publicId: user.publicId,
+    username: user.username,
+    name: user.name,
+    email: user.email,
+    dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : null,
+    age: user.age,
+    education: user.education || '',
+  };
 }
 
 export async function signup(request, response, next) {
   try {
-    const name = String(request.body?.name || '').trim();
-    const email = String(request.body?.email || '').trim().toLowerCase();
-    const password = String(request.body?.password || '');
+    const name      = String(request.body?.name      || '').trim();
+    const email     = String(request.body?.email     || '').trim().toLowerCase();
+    const password  = String(request.body?.password  || '');
+    const dob       = String(request.body?.dateOfBirth || '').trim();
+    const education = String(request.body?.education || '').trim();
 
     if (!name || !email || !password) return response.status(400).json({ error: 'Name, email, and password are required.' });
     if (!/^\S+@\S+\.\S+$/.test(email)) return response.status(400).json({ error: 'Enter a valid email address.' });
     if (password.length < 8) return response.status(400).json({ error: 'Password must be at least 8 characters.' });
+    if (dob) {
+      const dobDate = new Date(dob);
+      if (isNaN(dobDate.getTime())) return response.status(400).json({ error: 'Enter a valid date of birth.' });
+      const ageYears = (Date.now() - dobDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      if (ageYears < 5 || ageYears > 120) return response.status(400).json({ error: 'Enter a realistic date of birth.' });
+    }
     if (await User.exists({ email })) return response.status(409).json({ error: 'An account with this email already exists.' });
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ name, email, passwordHash, username: buildUsername(name, email), publicId: `ASL${String(Math.floor(Math.random() * 90) + 10)}` });
+    const user = await User.create({
+      name, email, passwordHash,
+      username:    buildUsername(name, email),
+      publicId:    `ASL${String(Math.floor(Math.random() * 90) + 10)}`,
+      dateOfBirth: dob ? new Date(dob) : null,
+      education:   education || '',
+    });
     return response.status(201).json({ user: publicUser(user) });
   } catch (error) {
     return next(error);

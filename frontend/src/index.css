@@ -6246,3 +6246,878 @@ body {
   .style-card-grid { grid-template-columns: repeat(3, 1fr); }
   .swatch-grid { grid-template-columns: repeat(6, 1fr); }
 }
+
+/* ==========================================================================
+   AVATAR DESIGNER — Save button + saved toast state
+   ========================================================================== */
+
+.designer-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 10px;
+  border: 2px solid var(--accent, #38bdf8);
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--accent, #38bdf8);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s,
+              box-shadow 0.18s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.designer-save-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+  transform: translateY(-1px);
+}
+
+.designer-save-btn:active {
+  transform: translateY(0);
+}
+
+/* Saved state — green pulse */
+.designer-save-btn--saved {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.4);
+  animation: save-pop 0.25s ease-out;
+}
+
+@keyframes save-pop {
+  0%   { transform: scale(0.95); }
+  60%  { transform: scale(1.06); }
+  100% { transform: scale(1);    }
+}
+
+.save-icon { font-size: 0.95rem; }
+.save-check {
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+/* Light-theme overrides */
+.light-theme .designer-save-btn {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+.light-theme .designer-save-btn:hover {
+  background: rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.25);
+}
+.light-theme .designer-save-btn--saved {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+  box-shadow: 0 0 14px rgba(22, 163, 74, 0.3);
+}
+
+/* ==========================================================================
+   PPT TO ASL FLOW — full page redesign
+   ========================================================================== */
+
+.ppt-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+.ppt-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+  padding: 2rem 2rem 1.75rem;
+  background: linear-gradient(135deg, rgba(14,116,144,0.18) 0%, rgba(8,47,73,0.55) 60%, rgba(6,14,28,0.9) 100%);
+  border: 1px solid rgba(56,189,248,0.22);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ppt-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(56,189,248,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.ppt-hero-text { position: relative; z-index: 1; }
+
+.ppt-hero-title {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.1;
+  margin: 0.5rem 0 0.85rem;
+  letter-spacing: -0.02em;
+}
+
+.ppt-hero-desc {
+  font-size: 0.95rem;
+  color: rgba(226,232,240,0.8);
+  line-height: 1.6;
+  max-width: 540px;
+  margin: 0 0 1rem;
+}
+
+.ppt-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ppt-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: rgba(56,189,248,0.12);
+  border: 1px solid rgba(56,189,248,0.3);
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
+/* Slide mock illustration */
+.ppt-hero-illustration {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.ppt-slide-mock {
+  width: 200px;
+  background: rgba(15,23,42,0.85);
+  border: 1px solid rgba(56,189,248,0.3);
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(56,189,248,0.08);
+}
+
+.ppt-slide-mock-bar {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0.3rem;
+}
+
+.ppt-slide-mock-bar span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+}
+
+.ppt-slide-mock-bar span:first-child { background: #ef4444; }
+.ppt-slide-mock-bar span:nth-child(2) { background: #f59e0b; }
+.ppt-slide-mock-bar span:nth-child(3) { background: #22c55e; }
+
+.ppt-slide-mock-line {
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(56,189,248,0.25);
+  animation: ppt-shimmer 2s ease-in-out infinite;
+}
+
+.ppt-slide-mock-line--title {
+  height: 13px;
+  background: rgba(56,189,248,0.5);
+  width: 80%;
+}
+
+.ppt-slide-mock-line--short {
+  width: 55%;
+}
+
+@keyframes ppt-shimmer {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1;   }
+}
+
+.ppt-slide-mock-arrow {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-align: right;
+  letter-spacing: 0.06em;
+}
+
+/* ── Feature cards ─────────────────────────────────────────────────────────── */
+.ppt-features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.ppt-feature-card {
+  background: var(--panel, #0c1a30);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.ppt-feature-card:hover {
+  border-color: rgba(56,189,248,0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.ppt-feature-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.ppt-feature-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink, #f8fafc);
+}
+
+.ppt-feature-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted, #94a3b8);
+  line-height: 1.5;
+}
+
+/* ── Upload zone ───────────────────────────────────────────────────────────── */
+.ppt-upload-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ppt-upload-zone {
+  width: 100%;
+  max-width: 680px;
+  min-height: 220px;
+  border: 2px dashed rgba(56,189,248,0.35);
+  border-radius: 18px;
+  background: rgba(56,189,248,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.ppt-upload-zone:hover,
+.ppt-upload-zone:focus-visible {
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.08);
+  box-shadow: 0 0 30px rgba(56,189,248,0.15);
+  outline: none;
+}
+
+.ppt-upload-zone--drag {
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.13);
+  box-shadow: 0 0 40px rgba(56,189,248,0.25);
+  transform: scale(1.01);
+}
+
+.ppt-upload-zone--loading {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Idle state */
+.ppt-upload-idle-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+
+.ppt-upload-icon {
+  font-size: 3rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(56,189,248,0.4));
+}
+
+.ppt-upload-heading {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink, #f8fafc);
+}
+
+.ppt-upload-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted, #94a3b8);
+}
+
+.ppt-upload-filename {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #38bdf8;
+}
+
+.ppt-upload-cta {
+  margin-top: 0.4rem;
+}
+
+.ppt-upload-btn {
+  display: inline-block;
+  padding: 0.5rem 1.4rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--accent, #38bdf8);
+  background: rgba(56,189,248,0.1);
+  color: var(--accent, #38bdf8);
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: none; /* click handled by the zone */
+}
+
+.ppt-upload-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(148,163,184,0.6);
+  max-width: 380px;
+}
+
+.ppt-upload-error {
+  max-width: 680px;
+  width: 100%;
+}
+
+/* Loading/progress state */
+.ppt-upload-progress-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  text-align: center;
+  width: 100%;
+  max-width: 340px;
+}
+
+.ppt-spinner {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.ppt-spinner-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid rgba(56,189,248,0.15);
+  border-top-color: #38bdf8;
+  animation: ppt-spin 0.8s linear infinite;
+}
+
+@keyframes ppt-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ppt-upload-status {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink, #f8fafc);
+}
+
+.ppt-upload-substatus {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted, #94a3b8);
+}
+
+.ppt-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ppt-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 6px;
+  transition: width 0.35s ease;
+}
+
+.ppt-progress-pct {
+  font-size: 0.72rem;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* ── Results layout ────────────────────────────────────────────────────────── */
+.ppt-result-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+  min-height: 700px;
+}
+
+/* ── Slide panel ───────────────────────────────────────────────────────────── */
+.ppt-slide-panel {
+  background: var(--panel, #0c1a30);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: hidden;
+  position: sticky;
+  top: 1rem;
+  height: calc(100vh - 5rem);
+  min-height: 600px;
+  max-height: 860px;
+}
+
+.ppt-slide-panel-header {
+  padding: 1rem 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ppt-file-name {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.ppt-slide-controls {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.ppt-play-btn {
+  padding: 0.32rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(56,189,248,0.35);
+  background: rgba(56,189,248,0.08);
+  color: #38bdf8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ppt-play-btn:hover { background: rgba(56,189,248,0.16); }
+.ppt-play-btn--active { background: rgba(56,189,248,0.2); border-color: #38bdf8; }
+.ppt-play-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.ppt-reset-btn {
+  padding: 0.32rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ppt-reset-btn:hover { color: #ef4444; border-color: #ef4444; }
+
+.ppt-playback-track {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 1rem;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ppt-playback-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.ppt-line-counter {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin: 0;
+  padding: 0 1rem;
+}
+
+.ppt-line-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0 0.6rem 0.6rem;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.2) transparent;
+}
+
+.ppt-line-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.03);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.ppt-line-btn:hover {
+  border-color: rgba(56,189,248,0.35);
+  background: rgba(56,189,248,0.07);
+}
+
+.ppt-line-btn--active {
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.12);
+}
+
+.ppt-line-btn--done {
+  opacity: 0.5;
+}
+
+.ppt-line-meta {
+  font-size: 0.62rem;
+  color: var(--muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ppt-done-check {
+  color: #22c55e;
+  font-weight: 900;
+}
+
+.ppt-line-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink, #f8fafc);
+  line-height: 1.4;
+}
+
+.ppt-line-btn--active .ppt-line-text {
+  color: #38bdf8;
+}
+
+.ppt-no-lines {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0.5rem 0.25rem;
+}
+
+/* Gloss chips */
+.ppt-gloss-row {
+  padding: 0.6rem 1rem 0.75rem;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.ppt-gloss-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-height: 88px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.2) transparent;
+}
+
+.ppt-gloss-chip {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(56,189,248,0.12);
+  border: 1px solid rgba(56,189,248,0.25);
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
+/* ── Avatar panel ──────────────────────────────────────────────────────────── */
+.ppt-avatar-panel {
+  background: var(--panel, #0c1a30);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 700px;
+}
+
+/* Force the AnimateDiffStudio / ASLPlayer inside ppt-avatar-panel to fill available space */
+.ppt-avatar-panel .asl-player-wrapper { flex: 1; display: flex; flex-direction: column; }
+.ppt-avatar-panel .animatediff-studio  { flex: 1; }
+.ppt-avatar-panel .studio-viewport-grid {
+  min-height: 500px;
+}
+.ppt-avatar-panel .motion-canvas-viewport,
+.ppt-avatar-panel .motion-video-engine-container {
+  min-height: 440px !important;
+  height: 440px !important;
+}
+.ppt-avatar-panel .avatar-3d-canvas-container {
+  min-height: 440px !important;
+  height: 440px !important;
+}
+/* The video wrapper inside the PPT avatar panel needs explicit dimensions */
+.ppt-avatar-panel .video-wrapper {
+  min-height: 420px;
+  aspect-ratio: unset;
+}
+.ppt-avatar-panel .motion-engine-frame {
+  min-height: 420px;
+}
+/* Ensure the canvas inside takes the full space */
+.ppt-avatar-panel .motion-canvas-viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 420px;
+}
+/* Hide the big studio header/tabs inside the ppt panel to save space */
+.ppt-avatar-panel .studio-header,
+.ppt-avatar-panel .avatar-picker-bar,
+.ppt-avatar-panel .studio-tabs { display: none; }
+/* Also hide the sidebar gesture strip inside ppt panel — not needed there */
+.ppt-avatar-panel .studio-sidebar-panel { display: none; }
+.ppt-avatar-panel .studio-viewport-grid { grid-template-columns: 1fr; }
+
+.ppt-avatar-header {
+  padding: 0.9rem 1.1rem 0;
+}
+
+.ppt-current-line-text {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--ink, #f8fafc);
+  line-height: 1.4;
+}
+
+/* ── Light theme ───────────────────────────────────────────────────────────── */
+.light-theme .ppt-hero {
+  background: linear-gradient(135deg, rgba(219,234,254,0.8), rgba(239,246,255,0.95));
+  border-color: rgba(37,99,235,0.2);
+}
+
+.light-theme .ppt-hero::before {
+  background: radial-gradient(ellipse at 80% 50%, rgba(37,99,235,0.07) 0%, transparent 65%);
+}
+
+.light-theme .ppt-hero-title { color: #0f172a; }
+.light-theme .ppt-hero-desc  { color: #334155; }
+
+.light-theme .ppt-badge {
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.25);
+  color: #1e40af;
+}
+
+.light-theme .ppt-slide-mock {
+  background: #f0f7ff;
+  border-color: rgba(37,99,235,0.25);
+}
+
+.light-theme .ppt-slide-mock-line { background: rgba(37,99,235,0.2); }
+.light-theme .ppt-slide-mock-line--title { background: rgba(37,99,235,0.4); }
+.light-theme .ppt-slide-mock-arrow { color: #2563eb; }
+
+.light-theme .ppt-feature-card {
+  background: #ffffff;
+  border-color: rgba(37,99,235,0.15);
+}
+
+.light-theme .ppt-feature-title { color: #0f172a; }
+
+.light-theme .ppt-upload-zone {
+  border-color: rgba(37,99,235,0.3);
+  background: rgba(37,99,235,0.03);
+}
+
+.light-theme .ppt-upload-zone:hover,
+.light-theme .ppt-upload-zone--drag {
+  border-color: #2563eb;
+  background: rgba(37,99,235,0.07);
+}
+
+.light-theme .ppt-upload-heading { color: #0f172a; }
+.light-theme .ppt-upload-btn {
+  border-color: #2563eb;
+  background: rgba(37,99,235,0.08);
+  color: #2563eb;
+}
+
+.light-theme .ppt-slide-panel,
+.light-theme .ppt-avatar-panel {
+  background: #ffffff;
+  border-color: rgba(37,99,235,0.15);
+}
+
+.light-theme .ppt-line-btn--active {
+  border-color: #2563eb;
+  background: rgba(37,99,235,0.08);
+}
+
+.light-theme .ppt-line-btn--active .ppt-line-text { color: #1e40af; }
+.light-theme .ppt-gloss-chip {
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.2);
+  color: #1e40af;
+}
+
+.light-theme .ppt-play-btn {
+  border-color: rgba(37,99,235,0.3);
+  background: rgba(37,99,235,0.07);
+  color: #1e40af;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .ppt-features-grid { grid-template-columns: repeat(2,1fr); }
+  .ppt-result-layout { grid-template-columns: 1fr; }
+  .ppt-slide-panel { position: static; max-height: none; }
+}
+
+@media (max-width: 680px) {
+  .ppt-hero { grid-template-columns: 1fr; }
+  .ppt-hero-illustration { display: none; }
+  .ppt-features-grid { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   SIGNUP — DOB, education, age pill, two-column row
+   ========================================================================== */
+
+/* Two-column row inside the auth form */
+.auth-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+@media (max-width: 500px) {
+  .auth-two-col { grid-template-columns: 1fr; }
+}
+
+/* Age pill shown next to DOB label */
+.auth-age-pill {
+  display: inline-block;
+  margin-left: 0.45rem;
+  padding: 1px 8px;
+  border-radius: 20px;
+  background: rgba(56,189,248,0.15);
+  border: 1px solid rgba(56,189,248,0.3);
+  color: #38bdf8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* Small helper text below a field */
+.auth-field-hint {
+  display: block;
+  margin-top: 0.28rem;
+  font-size: 0.68rem;
+  color: var(--muted, #94a3b8);
+  line-height: 1.3;
+}
+
+/* Select input inherits rainbow-input but needs arrow fix */
+.rainbow-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2338bdf8' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  padding-right: 2.4rem;
+  cursor: pointer;
+}
+
+.rainbow-select option {
+  background: var(--panel, #0c1a30);
+  color: var(--ink, #f8fafc);
+}
+
+/* Date input calendar icon colour fix */
+input[type="date"].rainbow-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) saturate(2) hue-rotate(175deg);
+  cursor: pointer;
+}
+
+/* Guest link at bottom of sign-up form */
+.auth-guest-note {
+  margin: 0;
+  text-align: center;
+}
+
+.auth-guest-link {
+  background: none;
+  border: none;
+  color: var(--muted, #94a3b8);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  transition: color 0.15s;
+}
+
+.auth-guest-link:hover { color: var(--accent, #38bdf8); }
+
+/* Success banner (green) — mirrors auth-error-banner */
+.auth-success-banner {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.35);
+  color: #22c55e;
+  font-size: 0.82rem;
+}
+
+/* Light theme overrides */
+.light-theme .auth-age-pill {
+  background: rgba(37,99,235,0.1);
+  border-color: rgba(37,99,235,0.25);
+  color: #1e40af;
+}
+
+.light-theme .rainbow-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232563eb' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.light-theme .rainbow-select option {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.light-theme input[type="date"].rainbow-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.3) sepia(1) saturate(2) hue-rotate(200deg);
+}
