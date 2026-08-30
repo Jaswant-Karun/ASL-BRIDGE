@@ -297,45 +297,75 @@ function buildDesignerRig(scene, design) {
 
   // ── Head ──
   const headGroup = new THREE.Group(); headGroup.position.set(0,1.16,0); root.add(headGroup);
-  const headGeo = new THREE.SphereGeometry(0.155, 28, 28);
-  headGeo.scale(1, 1.15, 0.98);
+  const headGeo = new THREE.SphereGeometry(0.155, 32, 32);
+  headGeo.scale(0.96, 1.18, 0.98);
   headGroup.add(new THREE.Mesh(headGeo, mat.skin));
 
+  // Chin contour
+  const chinGeo = new THREE.SphereGeometry(0.062, 16, 12);
+  chinGeo.scale(1.2, 0.60, 0.85);
+  const chin = new THREE.Mesh(chinGeo, mat.skin); chin.position.set(0, -0.132, 0.035); headGroup.add(chin);
+
   // Ears
-  const earGeo = new THREE.SphereGeometry(0.032, 12, 12); earGeo.scale(0.5,1,0.7);
-  const lEar = new THREE.Mesh(earGeo, mat.skin); lEar.position.set(-0.16, 0, 0); headGroup.add(lEar);
-  const rEar = new THREE.Mesh(earGeo, mat.skin); rEar.position.set(0.16, 0, 0); headGroup.add(rEar);
+  const earGeo = new THREE.SphereGeometry(0.038, 14, 12); earGeo.scale(0.40, 1.05, 0.65);
+  const lEar = new THREE.Mesh(earGeo, mat.skin); lEar.position.set(-0.156, 0.012, -0.005); headGroup.add(lEar);
+  const rEar = new THREE.Mesh(earGeo, mat.skin); rEar.position.set(0.156, 0.012, -0.005); headGroup.add(rEar);
 
   // Eyes
-  const eyeWhiteGeo = new THREE.SphereGeometry(0.026, 12, 12);
-  const lEye = new THREE.Mesh(eyeWhiteGeo, mat.white); lEye.position.set(-0.055, 0.025, 0.14); headGroup.add(lEye);
-  const rEye = new THREE.Mesh(eyeWhiteGeo, mat.white); rEye.position.set(0.055, 0.025, 0.14); headGroup.add(rEye);
-  const pupilGeo = new THREE.SphereGeometry(0.014, 8, 8);
-  const lPupil = new THREE.Mesh(pupilGeo, mat.eye); lPupil.position.set(-0.054, 0.025, 0.155); headGroup.add(lPupil);
-  const rPupil = new THREE.Mesh(pupilGeo, mat.eye); rPupil.position.set(0.056, 0.025, 0.155); headGroup.add(rPupil);
+  const eyeWhiteGeo = new THREE.SphereGeometry(0.026, 16, 14);
+  eyeWhiteGeo.scale(1.0, 1.15, 0.50);
+  const lEye = new THREE.Mesh(eyeWhiteGeo, mat.white); lEye.position.set(-0.056, 0.028, 0.144); headGroup.add(lEye);
+  const rEye = new THREE.Mesh(eyeWhiteGeo, mat.white); rEye.position.set(0.056, 0.028, 0.144); headGroup.add(rEye);
+
+  // Dark brown iris
+  const irisMat = new THREE.MeshStandardMaterial({ color: 0x382012, roughness: 0.3 });
+  const irisGeo = new THREE.SphereGeometry(0.0165, 14, 12);
+  irisGeo.scale(1.0, 1.10, 0.40);
+  const lIris = new THREE.Mesh(irisGeo, irisMat); lIris.position.set(-0.056, 0.028, 0.156); headGroup.add(lIris);
+  const rIris = new THREE.Mesh(irisGeo, irisMat); rIris.position.set(0.056, 0.028, 0.156); headGroup.add(rIris);
+
+  // Pupil
+  const pupilGeo = new THREE.CircleGeometry(0.0095, 12);
+  const lPupil = new THREE.Mesh(pupilGeo, mat.eye); lPupil.position.set(-0.056, 0.028, 0.168); headGroup.add(lPupil);
+  const rPupil = new THREE.Mesh(pupilGeo, mat.eye); rPupil.position.set(0.056, 0.028, 0.168); headGroup.add(rPupil);
+
+  // Catchlights
+  const catchMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const catchGeo = new THREE.CircleGeometry(0.004, 8);
+  const lCatch = new THREE.Mesh(catchGeo, catchMat); lCatch.position.set(-0.051, 0.034, 0.169); headGroup.add(lCatch);
+  const rCatch = new THREE.Mesh(catchGeo, catchMat); rCatch.position.set(0.061, 0.034, 0.169); headGroup.add(rCatch);
 
   // Eyebrows
-  const browGeo = new THREE.BoxGeometry(0.055, 0.009, 0.01);
-  const browMat = new THREE.MeshBasicMaterial({ color: hexToThree(hairHex) });
-  const lBrow = new THREE.Mesh(browGeo, browMat); lBrow.position.set(-0.055, 0.068, 0.145); headGroup.add(lBrow);
-  const rBrow = new THREE.Mesh(browGeo, browMat); rBrow.position.set(0.055, 0.068, 0.145); headGroup.add(rBrow);
+  const browGeo = new THREE.BoxGeometry(0.056, 0.012, 0.018);
+  const browMat = new THREE.MeshStandardMaterial({ color: hexToThree(hairHex), roughness: 0.65 });
+  const lBrow = new THREE.Mesh(browGeo, browMat); lBrow.position.set(-0.056, 0.088, 0.145); lBrow.rotation.z = 0.08; headGroup.add(lBrow);
+  const rBrow = new THREE.Mesh(browGeo, browMat); rBrow.position.set(0.056, 0.088, 0.145); rBrow.rotation.z = -0.08; headGroup.add(rBrow);
 
-  // Nose
-  const noseGeo = new THREE.ConeGeometry(0.018, 0.038, 8);
-  const nose = new THREE.Mesh(noseGeo, mat.skin); nose.rotation.x = Math.PI/2;
-  nose.position.set(0, -0.005, 0.158); headGroup.add(nose);
+  // 3D Nose
+  const noseBridgeGeo = new THREE.CylinderGeometry(0.011, 0.017, 0.060, 12);
+  const noseBridge = new THREE.Mesh(noseBridgeGeo, mat.skin); noseBridge.position.set(0, -0.028, 0.155); noseBridge.rotation.x = -0.22; headGroup.add(noseBridge);
+  const noseTipGeo = new THREE.SphereGeometry(0.021, 14, 10);
+  noseTipGeo.scale(1.15, 0.78, 0.95);
+  const noseTip = new THREE.Mesh(noseTipGeo, mat.skin); noseTip.position.set(0, -0.058, 0.168); headGroup.add(noseTip);
 
-  // Mouth
-  const mouthGeo = new THREE.TorusGeometry(0.028, 0.007, 6, 16, Math.PI);
-  const mouthMat = new THREE.MeshBasicMaterial({ color: 0xb05050 });
-  const mouth = new THREE.Mesh(mouthGeo, mouthMat); mouth.position.set(0,-0.045,0.147); mouth.rotation.z = Math.PI; headGroup.add(mouth);
+  // Mouth (Smiling)
+  const mouthGeo = new THREE.SphereGeometry(0.032, 14, 8);
+  mouthGeo.scale(1.35, 0.52, 0.48);
+  const mouthMat = new THREE.MeshStandardMaterial({ color: 0xb9635b, roughness: 0.48 });
+  const mouth = new THREE.Mesh(mouthGeo, mouthMat); mouth.position.set(0, -0.072, 0.151); headGroup.add(mouth);
 
   // ── Hair ──
   if (design.hairStyle !== 'none') {
-    const hMat = new THREE.MeshStandardMaterial({ color: hexToThree(hairHex), roughness: 0.9 });
+    const hMat = new THREE.MeshStandardMaterial({ color: hexToThree(hairHex), roughness: 0.75 });
     if (design.hairStyle === 'short') {
-      const hGeo = new THREE.SphereGeometry(0.162, 24, 24, 0, Math.PI*2, 0, Math.PI*0.55);
+      const hGeo = new THREE.SphereGeometry(0.170, 28, 20, 0, Math.PI*2, 0, Math.PI*0.62);
+      hGeo.scale(1.02, 1.14, 1.06);
       headGroup.add(new THREE.Mesh(hGeo, hMat));
+      // Signature side-swept bangs
+      const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 10), hMat);
+      b1.scale.set(2.6, 0.55, 1.1); b1.position.set(-0.045, 0.128, 0.118); b1.rotation.set(-0.18, 0.35, -0.32); headGroup.add(b1);
+      const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.044, 12, 10), hMat);
+      b2.scale.set(2.2, 0.52, 1.0); b2.position.set(0.065, 0.122, 0.122); b2.rotation.set(-0.15, -0.28, 0.25); headGroup.add(b2);
     } else if (design.hairStyle === 'medium') {
       const hGeo = new THREE.SphereGeometry(0.168, 24, 24, 0, Math.PI*2, 0, Math.PI*0.65);
       headGroup.add(new THREE.Mesh(hGeo, hMat));

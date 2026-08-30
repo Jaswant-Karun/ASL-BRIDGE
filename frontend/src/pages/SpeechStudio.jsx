@@ -8,6 +8,7 @@ import { logTranslation } from './AnalyticsPage';
 
 export default function SpeechStudio() {
   const [isRecording, setIsRecording] = useState(false);
+  const [speechLang, setSpeechLang] = useState('en-US'); // 'en-US' | 'ta-IN' | 'hi-IN'
   const [transcript, setTranscript] = useState('');
   const [interimText, setInterimText] = useState('');
   const [translationResult, setTranslationResult] = useState(null);
@@ -83,7 +84,7 @@ export default function SpeechStudio() {
     const recognition = new SpeechRec();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = speechLang;
 
     recognition.onstart = () => {
       isRecordingRef.current = true;
@@ -192,7 +193,7 @@ export default function SpeechStudio() {
   };
 
   // Execute translation
-  const handleTranslate = async (textToTranslate = transcript) => {
+  const handleTranslate = async (textToTranslate = transcript, forcedLang = null) => {
     const text = (textToTranslate || transcript).trim();
     if (!text) {
       setSpeechNotice('Please speak or enter text first.');
@@ -203,7 +204,8 @@ export default function SpeechStudio() {
     setIsLoading(true);
     try {
       const t0 = Date.now();
-      const res = await translateText(text);
+      const langCode = forcedLang || (speechLang.startsWith('ta') ? 'ta' : speechLang.startsWith('hi') ? 'hi' : 'en');
+      const res = await translateText(text, langCode);
       logTranslation(text, res.gloss || [], Date.now() - t0);
       setTranslationResult(res);
     } catch (err) {
@@ -257,6 +259,37 @@ export default function SpeechStudio() {
 
       {/* Rainbow Microphone Recording Section */}
       <section className="speech-record-panel">
+        <div className="speech-lang-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className="language-tab-group" style={{ display: 'flex', gap: '0.4rem', background: 'rgba(255,255,255,0.06)', padding: '0.3rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button
+              type="button"
+              className={`lang-pill-btn ${speechLang === 'en-US' ? 'active' : ''}`}
+              onClick={() => setSpeechLang('en-US')}
+              style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: speechLang === 'en-US' ? '#38bdf8' : 'transparent', color: speechLang === 'en-US' ? '#040814' : '#94a3b8', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              🇬🇧 English (en-US)
+            </button>
+            <button
+              type="button"
+              className={`lang-pill-btn ${speechLang === 'ta-IN' ? 'active' : ''}`}
+              onClick={() => setSpeechLang('ta-IN')}
+              style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: speechLang === 'ta-IN' ? '#10b981' : 'transparent', color: speechLang === 'ta-IN' ? '#040814' : '#94a3b8', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              🇮🇳 தமிழ் (ta-IN)
+            </button>
+            <button
+              type="button"
+              className={`lang-pill-btn ${speechLang === 'hi-IN' ? 'active' : ''}`}
+              onClick={() => setSpeechLang('hi-IN')}
+              style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: speechLang === 'hi-IN' ? '#f59e0b' : 'transparent', color: speechLang === 'hi-IN' ? '#040814' : '#94a3b8', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              🇮🇳 हिन्दी (hi-IN)
+            </button>
+          </div>
+
+          <span className="telemetry-pill">🎙️ Active Spoken Language: {speechLang}</span>
+        </div>
+
         <RainbowAudioVisualizer isRecording={isRecording} audioStream={micStream} />
 
         <div className="speech-action-bar">
@@ -306,7 +339,7 @@ export default function SpeechStudio() {
             <span className="box-label">
               {isRecording ? (
                 <span className="live-rec-pill">
-                  <span className="rec-dot"></span> RECORDING LIVE (CLICK STOP WHEN DONE)...
+                  <span className="rec-dot"></span> RECORDING LIVE ({speechLang})...
                 </span>
               ) : (
                 'EXTRACTED SPEECH TRANSCRIPT'
@@ -327,50 +360,102 @@ export default function SpeechStudio() {
               sessionFinalTextRef.current = e.target.value;
               setInterimText('');
             }}
-            placeholder="Click 'Start Rainbow Voice Recording' and speak. When finished, click 'Stop & Extract Spoken Words'..."
+            placeholder={
+              speechLang === 'ta-IN'
+                ? "மைக் தொடங்கி தமிழில் பேசுங்கள் (எ.கா: 'வணக்கம், நாளை நான் கல்லூரி போகிறேன்')..."
+                : speechLang === 'hi-IN'
+                ? "माइक शुरू करके हिन्दी में बोलें (उदा: 'नमस्ते, कल मैं कॉलेज जा रहा हूँ')..."
+                : "Click 'Start Rainbow Voice Recording' and speak in English..."
+            }
             rows="3"
             className="rainbow-textarea speech-transcript-area"
           />
 
           {/* Quick Pre-Set Speech Prompts */}
           <div className="quick-speech-samples">
-            <span className="sample-label">Or test sample voice:</span>
-            <button
-              type="button"
-              className="sample-pill-btn"
-              onClick={() => {
-                const sample = 'Tomorrow I am going to college because I have an important project review.';
-                setTranscript(sample);
-                sessionFinalTextRef.current = sample;
-                handleTranslate(sample);
-              }}
-            >
-              Tomorrow College Review
-            </button>
-            <button
-              type="button"
-              className="sample-pill-btn"
-              onClick={() => {
-                const sample = 'Hello everyone, my name is Jashwan Karan.';
-                setTranscript(sample);
-                sessionFinalTextRef.current = sample;
-                handleTranslate(sample);
-              }}
-            >
-              Hello My Name Jashwan
-            </button>
-            <button
-              type="button"
-              className="sample-pill-btn"
-              onClick={() => {
-                const sample = 'Good morning, what to do next to learn computer science?';
-                setTranscript(sample);
-                sessionFinalTextRef.current = sample;
-                handleTranslate(sample);
-              }}
-            >
-              Good Morning Computer Science
-            </button>
+            <span className="sample-label">Or test sample voice ({speechLang}):</span>
+            {speechLang === 'ta-IN' ? (
+              <>
+                <button
+                  type="button"
+                  className="sample-pill-btn"
+                  onClick={() => {
+                    const sample = 'நாளை நான் கல்லூரி போகிறேன் எனக்கு முக்கிய திட்டம் உள்ளது.';
+                    setTranscript(sample);
+                    sessionFinalTextRef.current = sample;
+                    handleTranslate(sample, 'ta');
+                  }}
+                >
+                  நாளை கல்லூரி திட்டம்
+                </button>
+                <button
+                  type="button"
+                  className="sample-pill-btn"
+                  onClick={() => {
+                    const sample = 'வணக்கம், உங்கள் உதவிக்கு மிக்க நன்றி.';
+                    setTranscript(sample);
+                    sessionFinalTextRef.current = sample;
+                    handleTranslate(sample, 'ta');
+                  }}
+                >
+                  வணக்கம் நன்றி
+                </button>
+              </>
+            ) : speechLang === 'hi-IN' ? (
+              <>
+                <button
+                  type="button"
+                  className="sample-pill-btn"
+                  onClick={() => {
+                    const sample = 'कल मैं कॉलेज जा रहा हूँ क्योंकि मेरा महत्वपूर्ण प्रोजेक्ट है।';
+                    setTranscript(sample);
+                    sessionFinalTextRef.current = sample;
+                    handleTranslate(sample, 'hi');
+                  }}
+                >
+                  कल कॉलेज प्रोजेक्ट
+                </button>
+                <button
+                  type="button"
+                  className="sample-pill-btn"
+                  onClick={() => {
+                    const sample = 'नमस्ते, आपकी सहायता के लिए बहुत धन्यवाद।';
+                    setTranscript(sample);
+                    sessionFinalTextRef.current = sample;
+                    handleTranslate(sample, 'hi');
+                  }}
+                >
+                  नमस्ते धन्यवाद
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="sample-pill-btn"
+                  onClick={() => {
+                    const sample = 'Tomorrow I am going to college because I have an important project review.';
+                    setTranscript(sample);
+                    sessionFinalTextRef.current = sample;
+                    handleTranslate(sample, 'en');
+                  }}
+                >
+                  Tomorrow College Review
+                </button>
+                <button
+                  type="button"
+                  className="sample-pill-btn"
+                  onClick={() => {
+                    const sample = 'Hello everyone, my name is Jashwan Karan.';
+                    setTranscript(sample);
+                    sessionFinalTextRef.current = sample;
+                    handleTranslate(sample, 'en');
+                  }}
+                >
+                  Hello My Name Jashwan
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -388,6 +473,8 @@ export default function SpeechStudio() {
             nonManualMarkers={translationResult?.nonManualMarkers || []}
             animatediffData={translationResult?.animatediff || null}
             datasetGestures={translationResult?.datasetGestures || null}
+            language={translationResult?.language || (speechLang.startsWith('ta') ? 'ta' : speechLang.startsWith('hi') ? 'hi' : 'en')}
+            languageName={translationResult?.languageName || 'English'}
           />
         </section>
       ) : (

@@ -247,195 +247,268 @@ export default function Avatar3DCanvas({
 }
 
 /**
- * Builds the 3D Digital Human Avatar Rig (Bones, Joints, Shaders) in Three.js
- * Accepts an optional customAvatar from the Character Designer to override colours.
+ * Builds the 3D Digital Human Avatar Rig in Three.js matching the reference presenter:
+ * Dark styled swept hair, black suit blazer, white collared shirt, denim jeans,
+ * expressive face with eyes/eyebrows/smile, and articulated 5-finger hands.
  */
 function buildAvatarRig(scene, customAvatar = null) {
   const root = new THREE.Group();
+  root.rotation.set(0, 0, 0);
   scene.add(root);
 
-  // Use Character Designer colours when available, otherwise fall back to defaults
-  const skinHex  = customAvatar?.customSkinHex   || '#f5d0b5';
-  const clothHex = customAvatar?.customOutfitHex  || '#183b3a';
+  // Palette matching reference
+  const skinHex   = customAvatar?.customSkinHex   || '#f6cbaf';
+  const hairHex   = customAvatar?.customHairHex   || '#2d1810';
+  const shirtHex  = customAvatar?.customOutfitHex || '#f8fafc';
+  const jacketHex = '#16171a';
+  const jeansHex  = '#2f7fc1';
+  const beltHex   = '#1c1712';
 
-  const skinMaterial = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(skinHex),
-    roughness: 0.4,
-    metalness: 0.1
-  });
+  const SM = (hex, rough = 0.5, metal = 0.0) =>
+    new THREE.MeshStandardMaterial({ color: new THREE.Color(hex), roughness: rough, metalness: metal });
 
-  const clothMaterial = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(clothHex),
-    roughness: 0.6,
-    metalness: 0.2
-  });
+  const skinMaterial  = SM(skinHex,   0.50, 0.0);
+  const hairMaterial  = SM(hairHex,   0.65, 0.05);
+  const shirtMaterial = SM(shirtHex,  0.55, 0.0);
+  const clothMaterial = SM(jacketHex, 0.60, 0.05);
+  const jeansMaterial = SM(jeansHex,  0.70, 0.0);
+  const beltMaterial  = SM(beltHex,   0.45, 0.2);
+  const buckleM       = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.25, metalness: 0.85 });
+  const shoeMaterial  = SM('#18191c', 0.65, 0.1);
+  const eyeWhiteMat   = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+  const irisMat       = new THREE.MeshStandardMaterial({ color: new THREE.Color('#382012'), roughness: 0.25 });
+  const pupilM        = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
+  const catchM        = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const lipMaterial   = SM('#b9635b', 0.48, 0.0);
+  const jointMaterial = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.6 });
 
-  const jointMaterial = new THREE.MeshStandardMaterial({
-    color: 0x38bdf8,
-    emissive: 0x0284c7,
-    emissiveIntensity: 0.6
-  });
+  const add = (geo, mat, px=0, py=0, pz=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(px, py, pz); m.rotation.set(rx, ry, rz); m.scale.set(sx, sy, sz);
+    m.castShadow = true; m.receiveShadow = true;
+    return m;
+  };
 
-  const boneMaterial = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
+  // 1. Legs (Jeans)
+  const legGeo = new THREE.CylinderGeometry(0.088, 0.075, 0.52, 20);
+  root.add(add(legGeo, jeansMaterial,  0.11, -0.60, 0));
+  root.add(add(legGeo, jeansMaterial, -0.11, -0.60, 0));
 
-  // 1. Torso / Upper Body
-  const torsoGeo = new THREE.CylinderGeometry(0.24, 0.2, 0.55, 16);
-  const torso = new THREE.Mesh(torsoGeo, clothMaterial);
-  torso.position.y = 0;
-  root.add(torso);
+  // Shoes
+  const shoeGeo = new THREE.SphereGeometry(0.088, 16, 12);
+  shoeGeo.scale(1.25, 0.52, 1.75);
+  root.add(add(shoeGeo, shoeMaterial,  0.11, -0.88, 0.045));
+  root.add(add(shoeGeo, shoeMaterial, -0.11, -0.88, 0.045));
 
-  // 2. Neck & Head
-  const neckGeo = new THREE.CylinderGeometry(0.06, 0.07, 0.12, 12);
-  const neck = new THREE.Mesh(neckGeo, skinMaterial);
-  neck.position.y = 0.32;
-  root.add(neck);
+  // Belt & Silver Buckle
+  const beltRing = new THREE.TorusGeometry(0.222, 0.018, 10, 32);
+  root.add(add(beltRing, beltMaterial, 0, -0.33, 0, Math.PI/2, 0, 0));
+  const buckleGeo = new THREE.BoxGeometry(0.050, 0.036, 0.014);
+  root.add(add(buckleGeo, buckleM, 0, -0.33, 0.224));
 
+  // 2. Torso (White shirt under open black blazer jacket)
+  const torsoGroup = new THREE.Group();
+  const shirtGeo = new THREE.CylinderGeometry(0.218, 0.202, 0.51, 24);
+  torsoGroup.add(add(shirtGeo, shirtMaterial, 0, 0, 0));
+
+  const jacketBackGeo = new THREE.CylinderGeometry(0.236, 0.218, 0.51, 24, 1, false, -Math.PI * 0.72, Math.PI * 1.44);
+  torsoGroup.add(add(jacketBackGeo, clothMaterial, 0, 0, 0));
+
+  // Front lapels & open panels
+  const lapelGeo = new THREE.BoxGeometry(0.065, 0.24, 0.018);
+  torsoGroup.add(add(lapelGeo, clothMaterial, -0.125, 0.11, 0.228, 0, 0.15, 0.16));
+  torsoGroup.add(add(lapelGeo, clothMaterial,  0.125, 0.11, 0.228, 0, -0.15, -0.16));
+
+  // White shirt front
+  torsoGroup.add(add(new THREE.PlaneGeometry(0.14, 0.32), shirtMaterial, 0, 0.05, 0.226));
+
+  // Tailored shoulders
+  const shoulderGeo = new THREE.SphereGeometry(0.168, 24, 16);
+  shoulderGeo.scale(1.58, 0.56, 0.88);
+  torsoGroup.add(add(shoulderGeo, clothMaterial, 0, 0.24, 0));
+  root.add(torsoGroup);
+
+  // 3. Neck & Open Collar
+  const neckGeo = new THREE.CylinderGeometry(0.065, 0.078, 0.14, 20);
+  root.add(add(neckGeo, skinMaterial, 0, 0.34, 0));
+
+  const collarWingGeo = new THREE.BoxGeometry(0.032, 0.065, 0.008);
+  root.add(add(collarWingGeo, shirtMaterial, -0.052, 0.30, 0.07, -0.2, 0.25, -0.35));
+  root.add(add(collarWingGeo, shirtMaterial,  0.052, 0.30, 0.07, -0.2, -0.25, 0.35));
+
+  // 4. Head & Face (Facing Forward +Z)
   const headGroup = new THREE.Group();
-  headGroup.position.set(0, 0.48, 0);
+  headGroup.position.set(0, 0.535, 0);
 
-  const headGeo = new THREE.SphereGeometry(0.14, 24, 24);
-  headGeo.scale(1, 1.2, 1);
-  const headMesh = new THREE.Mesh(headGeo, skinMaterial);
-  headGroup.add(headMesh);
+  const headGeo = new THREE.SphereGeometry(0.150, 32, 32);
+  headGeo.scale(0.96, 1.15, 0.98);
+  headGroup.add(add(headGeo, skinMaterial, 0, 0, 0));
 
-  // Eyebrows (for Non-Manual ASL Markers)
-  const browGeo = new THREE.BoxGeometry(0.06, 0.012, 0.015);
-  const browMat = new THREE.MeshBasicMaterial({ color: 0x332211 });
+  // Subtle chin
+  const chinGeo = new THREE.SphereGeometry(0.045, 16, 12);
+  chinGeo.scale(1.1, 0.60, 0.80);
+  headGroup.add(add(chinGeo, skinMaterial, 0, -0.130, 0.035));
 
-  const leftEyebrow = new THREE.Mesh(browGeo, browMat);
-  leftEyebrow.position.set(-0.055, 0.06, 0.13);
+  // Ears
+  const earGeo = new THREE.SphereGeometry(0.034, 14, 12);
+  earGeo.scale(0.35, 1.0, 0.60);
+  headGroup.add(add(earGeo, skinMaterial, -0.150, 0.010, -0.010));
+  headGroup.add(add(earGeo.clone(), skinMaterial,  0.150, 0.010, -0.010));
+
+  // 3D Nose
+  const noseBridgeGeo = new THREE.CylinderGeometry(0.008, 0.014, 0.050, 12);
+  headGroup.add(add(noseBridgeGeo, skinMaterial, 0, -0.010, 0.145, -0.25, 0, 0));
+  const noseTipGeo = new THREE.SphereGeometry(0.016, 14, 12);
+  headGroup.add(add(noseTipGeo, skinMaterial, 0, -0.038, 0.155));
+
+  // Eyes (Forward-facing)
+  function makeEye(side) {
+    const eg = new THREE.Group();
+    eg.position.set(side * 0.055, 0.025, 0.136);
+    const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.022, 18, 14), eyeWhiteMat);
+    sclera.scale.set(1.0, 1.15, 0.45);
+    eg.add(sclera);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.014, 16, 12), irisMat);
+    iris.scale.set(1.0, 1.08, 0.35); iris.position.set(0, 0, 0.008);
+    eg.add(iris);
+    const pupil = new THREE.Mesh(new THREE.CircleGeometry(0.0075, 16), pupilM);
+    pupil.position.set(0, 0, 0.016);
+    eg.add(pupil);
+    const clight = new THREE.Mesh(new THREE.CircleGeometry(0.0032, 8), catchM);
+    clight.position.set(0.0035, 0.0040, 0.0165);
+    eg.add(clight);
+    return eg;
+  }
+  headGroup.add(makeEye(-1));
+  headGroup.add(makeEye(1));
+
+  // Eyebrows
+  const browGeo = new THREE.BoxGeometry(0.050, 0.009, 0.012);
+  const browMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(hairHex), roughness: 0.65 });
+  const leftEyebrow  = add(browGeo, browMat, -0.055, 0.068, 0.142, 0, 0,  0.08);
+  const rightEyebrow = add(browGeo.clone(), browMat,  0.055, 0.068, 0.142, 0, 0, -0.08);
   headGroup.add(leftEyebrow);
-
-  const rightEyebrow = new THREE.Mesh(browGeo, browMat);
-  rightEyebrow.position.set(0.055, 0.06, 0.13);
   headGroup.add(rightEyebrow);
 
-  // Eyes
-  const eyeGeo = new THREE.SphereGeometry(0.02, 12, 12);
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+  // Mouth
+  const mouthGeo = new THREE.SphereGeometry(0.026, 16, 8);
+  mouthGeo.scale(1.30, 0.48, 0.40);
+  headGroup.add(add(mouthGeo, lipMaterial, 0, -0.062, 0.144));
 
-  const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-  leftEye.position.set(-0.055, 0.02, 0.13);
-  headGroup.add(leftEye);
+  // Hair - Top and back only
+  const hairCapGeo = new THREE.SphereGeometry(0.154, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.42);
+  hairCapGeo.scale(1.02, 1.10, 1.04);
+  headGroup.add(add(hairCapGeo, hairMaterial, 0, 0.028, -0.015));
 
-  const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-  rightEye.position.set(0.055, 0.02, 0.13);
-  headGroup.add(rightEye);
+  const backHairGeo = new THREE.SphereGeometry(0.152, 24, 18, 0, Math.PI, 0, Math.PI * 0.65);
+  headGroup.add(add(backHairGeo, hairMaterial, 0, 0.010, -0.025, 0, -Math.PI / 2, 0));
+
+  // Side-swept bangs across forehead
+  headGroup.add(add(new THREE.CylinderGeometry(0.016, 0.010, 0.13, 12), hairMaterial, -0.025, 0.108, 0.118, -0.22, 0.10, -0.40));
+  headGroup.add(add(new THREE.CylinderGeometry(0.011, 0.005, 0.09, 12), hairMaterial,  0.045, 0.095, 0.122, -0.18, -0.15, -0.55));
+  headGroup.add(add(new THREE.CylinderGeometry(0.018, 0.010, 0.10, 10), hairMaterial, -0.152, -0.005, 0.005));
+  headGroup.add(add(new THREE.CylinderGeometry(0.018, 0.010, 0.10, 10), hairMaterial,  0.152, -0.005, 0.005));
 
   root.add(headGroup);
 
-  // 3. Right Arm (Dominant Signer Arm)
-  const rShoulderGroup = new THREE.Group();
-  rShoulderGroup.position.set(0.28, 0.22, 0);
+  // 5. Arms & Articulated Hands (Anatomical Left/Right Rig)
+  function buildArm(side) {
+    const sGroup = new THREE.Group();
+    sGroup.position.set(side * 0.28, 0.22, 0.02);
 
-  const rUpperArmGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.28, 12);
-  rUpperArmGeo.translate(0, -0.14, 0);
-  const rUpperArm = new THREE.Mesh(rUpperArmGeo, clothMaterial);
-  rShoulderGroup.add(rUpperArm);
+    const sBallGeo = new THREE.SphereGeometry(0.058, 16, 14);
+    sGroup.add(add(sBallGeo, clothMaterial));
 
-  const rElbowGroup = new THREE.Group();
-  rElbowGroup.position.set(0, -0.28, 0);
+    const uaGeo = new THREE.CylinderGeometry(0.048, 0.042, 0.26, 16);
+    uaGeo.translate(0, -0.13, 0);
+    sGroup.add(add(uaGeo, clothMaterial));
 
-  const rForearmGeo = new THREE.CylinderGeometry(0.038, 0.032, 0.26, 12);
-  rForearmGeo.translate(0, -0.13, 0);
-  const rForearm = new THREE.Mesh(rForearmGeo, skinMaterial);
-  rElbowGroup.add(rForearm);
+    const eGroup = new THREE.Group();
+    eGroup.position.set(0, -0.26, 0);
 
-  const rWristGroup = new THREE.Group();
-  rWristGroup.position.set(0, -0.26, 0);
+    const eBallGeo = new THREE.SphereGeometry(0.045, 14, 12);
+    eGroup.add(add(eBallGeo, clothMaterial));
 
-  const palmGeo = new THREE.BoxGeometry(0.07, 0.08, 0.02);
-  palmGeo.translate(0, -0.04, 0);
-  const rPalm = new THREE.Mesh(palmGeo, skinMaterial);
-  rWristGroup.add(rPalm);
+    const faGeo = new THREE.CylinderGeometry(0.042, 0.038, 0.16, 16);
+    faGeo.translate(0, -0.08, 0);
+    eGroup.add(add(faGeo, clothMaterial));
 
-  const rThumb = new THREE.Group();
-  rThumb.position.set(0.03, -0.03, 0.04);
-  const rThumbMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.05, 8), skinMaterial);
-  rThumbMesh.rotation.z = Math.PI / 2;
-  rThumbMesh.position.set(0.018, -0.02, 0);
-  rThumb.add(rThumbMesh);
-  rWristGroup.add(rThumb);
+    const cuffGeo = new THREE.CylinderGeometry(0.038, 0.036, 0.038, 16);
+    cuffGeo.translate(0, -0.18, 0);
+    eGroup.add(add(cuffGeo, shirtMaterial));
 
-  const rFingers = [];
-  const fingerOffsets = [-0.02, -0.006, 0.008, 0.024];
-  for (let f = 0; f < 4; f++) {
-    const fGroup = new THREE.Group();
-    fGroup.position.set(fingerOffsets[f], -0.08, 0.01 * (f % 2 === 0 ? -1 : 1));
-    const fGeo = new THREE.CylinderGeometry(0.0065, 0.0055, 0.06, 8);
-    fGeo.translate(0, -0.03, 0);
-    const fMesh = new THREE.Mesh(fGeo, skinMaterial);
-    fGroup.add(fMesh);
-    rWristGroup.add(fGroup);
-    rFingers.push(fGroup);
+    const faSkinGeo = new THREE.CylinderGeometry(0.034, 0.032, 0.048, 14);
+    faSkinGeo.translate(0, -0.215, 0);
+    eGroup.add(add(faSkinGeo, skinMaterial));
+
+    const wGroup = new THREE.Group();
+    wGroup.position.set(0, -0.24, 0);
+
+    const wBallGeo = new THREE.SphereGeometry(0.032, 12, 10);
+    wGroup.add(add(wBallGeo, skinMaterial));
+
+    const palmGeo = new THREE.BoxGeometry(0.072, 0.082, 0.022);
+    palmGeo.translate(0, -0.041, 0);
+    wGroup.add(add(palmGeo, skinMaterial));
+
+    // Thumb (Radial side)
+    const thumbGroup = new THREE.Group();
+    thumbGroup.position.set(side * 0.034, -0.024, 0.008);
+    thumbGroup.rotation.set(0.15, side * 0.30, side * -0.50);
+    const thumbMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.0088, 0.0070, 0.055, 10), skinMaterial);
+    thumbMesh.position.set(0, -0.028, 0);
+    thumbGroup.add(thumbMesh);
+    wGroup.add(thumbGroup);
+
+    // 4 Fingers (Index, Middle, Ring, Pinky) - from Radial to Ulnar
+    const fingers = [];
+    const fingerOffsets = [0.022, 0.007, -0.008, -0.023];
+    const fingerLens    = [0.074, 0.080, 0.074, 0.060];
+    for (let f = 0; f < 4; f++) {
+      const fGroup = new THREE.Group();
+      fGroup.position.set(side * fingerOffsets[f], -0.082, 0);
+      const fGeo = new THREE.CylinderGeometry(0.0082, 0.0065, fingerLens[f], 10);
+      fGeo.translate(0, -fingerLens[f]/2, 0);
+      fGroup.add(add(fGeo, skinMaterial));
+      wGroup.add(fGroup);
+      fingers.push(fGroup);
+    }
+
+    eGroup.add(wGroup);
+    sGroup.add(eGroup);
+    root.add(sGroup);
+
+    return { shoulder: sGroup, elbow: eGroup, wrist: wGroup, thumb: thumbGroup, fingers };
   }
 
-  rElbowGroup.add(rWristGroup);
-  rShoulderGroup.add(rElbowGroup);
-  root.add(rShoulderGroup);
+  const rightArm = buildArm( 1);
+  const leftArm  = buildArm(-1);
 
-  // 4. Left Arm (Non-Dominant Arm)
-  const lShoulderGroup = new THREE.Group();
-  lShoulderGroup.position.set(-0.28, 0.22, 0);
+  // Default neutral anatomical rest pose
+  rightArm.shoulder.rotation.set(0.04, 0.0, -0.06);
+  rightArm.elbow.rotation.set(0.08, 0.0, 0.0);
+  rightArm.wrist.rotation.set(0.02, 0.35, 0.0);
 
-  const lUpperArmGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.28, 12);
-  lUpperArmGeo.translate(0, -0.14, 0);
-  const lUpperArm = new THREE.Mesh(lUpperArmGeo, clothMaterial);
-  lShoulderGroup.add(lUpperArm);
-
-  const lElbowGroup = new THREE.Group();
-  lElbowGroup.position.set(0, -0.28, 0);
-
-  const lForearmGeo = new THREE.CylinderGeometry(0.038, 0.032, 0.26, 12);
-  lForearmGeo.translate(0, -0.13, 0);
-  const lForearm = new THREE.Mesh(lForearmGeo, skinMaterial);
-  lElbowGroup.add(lForearm);
-
-  const lWristGroup = new THREE.Group();
-  lWristGroup.position.set(0, -0.26, 0);
-
-  const lPalm = new THREE.Mesh(palmGeo.clone(), skinMaterial);
-  lWristGroup.add(lPalm);
-
-  const lThumb = new THREE.Group();
-  lThumb.position.set(-0.03, -0.03, 0.04);
-  const lThumbMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.006, 0.05, 8), skinMaterial);
-  lThumbMesh.rotation.z = -Math.PI / 2;
-  lThumbMesh.position.set(-0.018, -0.02, 0);
-  lThumb.add(lThumbMesh);
-  lWristGroup.add(lThumb);
-
-  const lFingers = [];
-  for (let f = 0; f < 4; f++) {
-    const fGroup = new THREE.Group();
-    fGroup.position.set(fingerOffsets[f], -0.08, 0.01 * (f % 2 === 0 ? 1 : -1));
-    const fGeo = new THREE.CylinderGeometry(0.0065, 0.0055, 0.06, 8);
-    fGeo.translate(0, -0.03, 0);
-    const fMesh = new THREE.Mesh(fGeo, skinMaterial);
-    fGroup.add(fMesh);
-    lWristGroup.add(fGroup);
-    lFingers.push(fGroup);
-  }
-
-  lElbowGroup.add(lWristGroup);
-  lShoulderGroup.add(lElbowGroup);
-  root.add(lShoulderGroup);
+  leftArm.shoulder.rotation.set(0.04, 0.0, 0.06);
+  leftArm.elbow.rotation.set(0.08, 0.0, 0.0);
+  leftArm.wrist.rotation.set(0.02, -0.35, 0.0);
 
   return {
     root,
+    torso: torsoGroup,
     head: headGroup,
     leftEyebrow,
     rightEyebrow,
-    rShoulder: rShoulderGroup,
-    rElbow: rElbowGroup,
-    rWrist: rWristGroup,
-    rThumb,
-    rFingers,
-    lShoulder: lShoulderGroup,
-    lElbow: lElbowGroup,
-    lWrist: lWristGroup,
-    lThumb,
-    lFingers,
+    rShoulder: rightArm.shoulder,
+    rElbow:    rightArm.elbow,
+    rWrist:    rightArm.wrist,
+    rThumb:    rightArm.thumb,
+    rFingers:  rightArm.fingers,
+    lShoulder: leftArm.shoulder,
+    lElbow:    leftArm.elbow,
+    lWrist:    leftArm.wrist,
+    lThumb:    leftArm.thumb,
+    lFingers:  leftArm.fingers,
     skinMaterial,
     clothMaterial,
     jointMaterial
@@ -465,24 +538,24 @@ function updateAvatarPose(rig, unit, frameInt, renderMode) {
   if (unit.rightArmKeyframes && unit.rightArmKeyframes.length > 0) {
     const k0 = unit.rightArmKeyframes[0];
     const k1 = unit.rightArmKeyframes[unit.rightArmKeyframes.length - 1] || k0;
-
     const smoothT = Math.sin(progress * Math.PI * 0.5);
 
-    rig.rShoulder.rotation.x = THREE.MathUtils.lerp(k0.shoulder[0], k1.shoulder[0], smoothT);
-    rig.rShoulder.rotation.y = THREE.MathUtils.lerp(k0.shoulder[1], k1.shoulder[1], smoothT);
-    rig.rShoulder.rotation.z = THREE.MathUtils.lerp(k0.shoulder[2], k1.shoulder[2], smoothT);
+    rig.rShoulder.rotation.x = THREE.MathUtils.lerp(k0.shoulder[0] + 0.25, k1.shoulder[0] + 0.25, smoothT);
+    rig.rShoulder.rotation.y = THREE.MathUtils.lerp(k0.shoulder[1] + 0.15, k1.shoulder[1] + 0.15, smoothT);
+    rig.rShoulder.rotation.z = THREE.MathUtils.lerp(k0.shoulder[2] + 0.10, k1.shoulder[2] + 0.10, smoothT);
 
-    rig.rElbow.rotation.x = THREE.MathUtils.lerp(k0.elbow[0], k1.elbow[0], smoothT);
+    rig.rElbow.rotation.x = THREE.MathUtils.lerp(k0.elbow[0] + 0.35, k1.elbow[0] + 0.35, smoothT);
     rig.rElbow.rotation.y = THREE.MathUtils.lerp(k0.elbow[1], k1.elbow[1], smoothT);
     rig.rElbow.rotation.z = THREE.MathUtils.lerp(k0.elbow[2], k1.elbow[2], smoothT);
 
     rig.rWrist.rotation.x = THREE.MathUtils.lerp(k0.wrist[0], k1.wrist[0], smoothT);
-    rig.rWrist.rotation.y = THREE.MathUtils.lerp(k0.wrist[1], k1.wrist[1], smoothT);
+    rig.rWrist.rotation.y = THREE.MathUtils.lerp(k0.wrist[1] + Math.PI - 0.25, k1.wrist[1] + Math.PI - 0.25, smoothT);
     rig.rWrist.rotation.z = THREE.MathUtils.lerp(k0.wrist[2], k1.wrist[2], smoothT);
   } else {
-    // Rest pose
-    rig.rShoulder.rotation.set(0.1, 0, -0.2);
-    rig.rElbow.rotation.set(0.4, 0, 0);
+    // Neutral anatomical rest pose
+    rig.rShoulder.rotation.set(0.04, 0.0, -0.06);
+    rig.rElbow.rotation.set(0.08, 0.0, 0.0);
+    rig.rWrist.rotation.set(0.02, 0.35, 0.0);
   }
 
   // 4. Non-Dominant (Left) Arm
@@ -491,17 +564,22 @@ function updateAvatarPose(rig, unit, frameInt, renderMode) {
     const lk1 = unit.leftArmKeyframes[unit.leftArmKeyframes.length - 1] || lk0;
     const smoothT = Math.sin(progress * Math.PI * 0.5);
 
-    rig.lShoulder.rotation.x = THREE.MathUtils.lerp(lk0.shoulder[0], lk1.shoulder[0], smoothT);
-    rig.lShoulder.rotation.y = THREE.MathUtils.lerp(lk0.shoulder[1], lk1.shoulder[1], smoothT);
-    rig.lShoulder.rotation.z = THREE.MathUtils.lerp(lk0.shoulder[2], lk1.shoulder[2], smoothT);
+    rig.lShoulder.rotation.x = THREE.MathUtils.lerp(lk0.shoulder[0] + 0.20, lk1.shoulder[0] + 0.20, smoothT);
+    rig.lShoulder.rotation.y = THREE.MathUtils.lerp(lk0.shoulder[1] - 0.15, lk1.shoulder[1] - 0.15, smoothT);
+    rig.lShoulder.rotation.z = THREE.MathUtils.lerp(lk0.shoulder[2] - 0.10, lk1.shoulder[2] - 0.10, smoothT);
 
-    rig.lElbow.rotation.x = THREE.MathUtils.lerp(lk0.elbow[0], lk1.elbow[0], smoothT);
+    rig.lElbow.rotation.x = THREE.MathUtils.lerp(lk0.elbow[0] + 0.30, lk1.elbow[0] + 0.30, smoothT);
     rig.lElbow.rotation.y = THREE.MathUtils.lerp(lk0.elbow[1], lk1.elbow[1], smoothT);
     rig.lElbow.rotation.z = THREE.MathUtils.lerp(lk0.elbow[2], lk1.elbow[2], smoothT);
+
+    rig.lWrist.rotation.x = THREE.MathUtils.lerp(lk0.wrist[0], lk1.wrist[0], smoothT);
+    rig.lWrist.rotation.y = THREE.MathUtils.lerp(lk0.wrist[1] - Math.PI + 0.25, lk1.wrist[1] - Math.PI + 0.25, smoothT);
+    rig.lWrist.rotation.z = THREE.MathUtils.lerp(lk0.wrist[2], lk1.wrist[2], smoothT);
   } else {
-    // Relaxed rest position
-    rig.lShoulder.rotation.set(0.1, 0, 0.2);
-    rig.lElbow.rotation.set(0.3, 0, 0);
+    // Relaxed neutral anatomical rest position
+    rig.lShoulder.rotation.set(0.04, 0.0, 0.06);
+    rig.lElbow.rotation.set(0.08, 0.0, 0.0);
+    rig.lWrist.rotation.set(0.02, -0.35, 0.0);
   }
 
   // 5. ASL Letter Pose Mapping: drive the actual finger & wrist articulation

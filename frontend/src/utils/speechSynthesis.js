@@ -26,9 +26,24 @@ class AvatarSpeechService {
     return this.voices;
   }
 
-  getVoiceForAvatar(avatarId = 'sarah') {
+  getVoiceForAvatar(avatarId = 'sarah', language = 'en', sampleText = '') {
     if (!this.voices || this.voices.length === 0) {
       this.loadVoices();
+    }
+
+    // Auto-detect language from text if not explicitly specified
+    let targetLang = language || 'en';
+    if (/[\u0B80-\u0BFF]/.test(sampleText)) targetLang = 'ta';
+    else if (/[\u0900-\u097F]/.test(sampleText)) targetLang = 'hi';
+
+    if (targetLang === 'ta') {
+      const tamilVoices = this.voices.filter((v) => v.lang.startsWith('ta') || v.name.toLowerCase().includes('tamil'));
+      if (tamilVoices.length > 0) return tamilVoices[0];
+    }
+
+    if (targetLang === 'hi') {
+      const hindiVoices = this.voices.filter((v) => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+      if (hindiVoices.length > 0) return hindiVoices[0];
     }
 
     const englishVoices = this.voices.filter((v) => v.lang.startsWith('en'));
@@ -59,6 +74,7 @@ class AvatarSpeechService {
   speak({
     text = '',
     avatarId = 'sarah',
+    language = 'en',
     rate = 0.95,
     pitch = 1.0,
     volume = 1.0,
@@ -81,8 +97,17 @@ class AvatarSpeechService {
     const utterance = new SpeechSynthesisUtterance(cleanText);
     this.currentUtterance = utterance;
 
-    const voice = this.getVoiceForAvatar(avatarId);
-    if (voice) utterance.voice = voice;
+    const voice = this.getVoiceForAvatar(avatarId, language, cleanText);
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else if (/[\u0B80-\u0BFF]/.test(cleanText)) {
+      utterance.lang = 'ta-IN';
+    } else if (/[\u0900-\u097F]/.test(cleanText)) {
+      utterance.lang = 'hi-IN';
+    } else {
+      utterance.lang = 'en-US';
+    }
 
     // Persona-specific pitch & rate tuning
     if (avatarId === 'maya') {

@@ -34,6 +34,8 @@ export default function AnimateDiffStudio({
   nonManualMarkers = [],
   animatediffData = null,
   datasetGestures = null,
+  language = 'en',
+  languageName = 'English',
   onAvatarChange = null
 }) {
   const [avatars, setAvatars] = useState(() => buildDefaultAvatars());
@@ -129,6 +131,7 @@ export default function AnimateDiffStudio({
     avatarSpeech.speak({
       text: textToSpeak,
       avatarId: selectedAvatarId,
+      language: language || 'en',
       onStart: () => setIsSpeaking(true),
       onBoundary: ({ word }) => setCurrentSpokenWord(word),
       onEnd: () => {

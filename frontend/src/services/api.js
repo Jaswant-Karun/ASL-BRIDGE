@@ -5,11 +5,15 @@ export async function healthCheck() {
   return response.json();
 }
 
-export async function translateText(text, avatarId = 'sarah') {
+export async function translateText(text, languageOrAvatar = 'en', maybeAvatarId = 'sarah') {
+  const isLang = ['en', 'ta', 'hi'].includes(languageOrAvatar);
+  const language = isLang ? languageOrAvatar : undefined;
+  const avatarId = isLang ? maybeAvatarId : languageOrAvatar;
+
   const response = await fetch(`${API_URL}/asl/translate`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text, avatarId })
+    body: JSON.stringify({ text, avatarId, language })
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'Translation failed.');

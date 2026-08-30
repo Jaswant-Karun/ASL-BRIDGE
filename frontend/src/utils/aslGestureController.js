@@ -350,27 +350,27 @@ export class ASLGestureController {
     const poseBlend = clamp(blend, 0, 1);
 
     if (shoulder) {
-      shoulder.rotation.x = shoulder.rotation.x * (1 - poseBlend) + (isLeft ? 0.18 : 0.12) * poseBlend;
-      shoulder.rotation.y = shoulder.rotation.y * (1 - poseBlend) + (isLeft ? 0.28 : -0.28) * poseBlend;
-      shoulder.rotation.z = shoulder.rotation.z * (1 - poseBlend) + (isLeft ? 0.15 : -0.15) * poseBlend;
+      shoulder.rotation.x = shoulder.rotation.x * (1 - poseBlend) + (isLeft ? 0.30 : 0.35) * poseBlend;
+      shoulder.rotation.y = shoulder.rotation.y * (1 - poseBlend) + (isLeft ? -0.15 : 0.20) * poseBlend;
+      shoulder.rotation.z = shoulder.rotation.z * (1 - poseBlend) + (isLeft ? -0.10 : 0.10) * poseBlend;
     }
 
     if (elbow) {
-      elbow.rotation.x = elbow.rotation.x * (1 - poseBlend) + (isLeft ? 0.45 : 0.5) * poseBlend;
-      elbow.rotation.y = elbow.rotation.y * (1 - poseBlend) + (isLeft ? 0.1 : -0.1) * poseBlend;
-      elbow.rotation.z = elbow.rotation.z * (1 - poseBlend) + (isLeft ? -0.05 : 0.05) * poseBlend;
+      elbow.rotation.x = elbow.rotation.x * (1 - poseBlend) + (isLeft ? 1.25 : 1.40) * poseBlend;
+      elbow.rotation.y = elbow.rotation.y * (1 - poseBlend) + (isLeft ? -0.15 : 0.15) * poseBlend;
+      elbow.rotation.z = elbow.rotation.z * (1 - poseBlend) + (isLeft ? 0.10 : -0.10) * poseBlend;
     }
 
     if (wrist) {
-      wrist.rotation.x = wrist.rotation.x * (1 - poseBlend) + gesture.wrist.x * poseBlend;
-      wrist.rotation.y = wrist.rotation.y * (1 - poseBlend) + (isLeft ? -gesture.wrist.y : gesture.wrist.y) * poseBlend;
-      wrist.rotation.z = wrist.rotation.z * (1 - poseBlend) + (isLeft ? -gesture.wrist.z : gesture.wrist.z) * poseBlend;
+      wrist.rotation.x = wrist.rotation.x * (1 - poseBlend) + (gesture.wrist.x || 0.15) * poseBlend;
+      wrist.rotation.y = wrist.rotation.y * (1 - poseBlend) + (isLeft ? (-Math.PI + 0.25 - (gesture.wrist.y || 0)) : (Math.PI - 0.25 + (gesture.wrist.y || 0))) * poseBlend;
+      wrist.rotation.z = wrist.rotation.z * (1 - poseBlend) + (isLeft ? -(gesture.wrist.z || 0.15) : (gesture.wrist.z || 0.15)) * poseBlend;
     }
 
     if (thumb) {
-      thumb.rotation.x = thumb.rotation.x * (1 - poseBlend) + (isLeft ? -gesture.thumb.x : gesture.thumb.x) * poseBlend;
-      thumb.rotation.y = thumb.rotation.y * (1 - poseBlend) + (isLeft ? -gesture.thumb.y : gesture.thumb.y) * poseBlend;
-      thumb.rotation.z = thumb.rotation.z * (1 - poseBlend) + (isLeft ? -gesture.thumb.z : gesture.thumb.z) * poseBlend;
+      thumb.rotation.x = thumb.rotation.x * (1 - poseBlend) + (gesture.thumb.x || 0.2) * poseBlend;
+      thumb.rotation.y = thumb.rotation.y * (1 - poseBlend) + (isLeft ? -(gesture.thumb.y || 0.2) : (gesture.thumb.y || 0.2)) * poseBlend;
+      thumb.rotation.z = thumb.rotation.z * (1 - poseBlend) + (isLeft ? -(gesture.thumb.z || 0.2) : (gesture.thumb.z || 0.2)) * poseBlend;
     }
 
     const order = getFingerOrder(letter);

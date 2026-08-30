@@ -49,21 +49,21 @@ const HAIR_COLORS = [
 ];
 
 const DEFAULT_DESIGN = {
-  skinTone:    'medium',
+  skinTone:    'fair',
   hairStyle:   'short',
-  hairColor:   'black',
-  outfitStyle: 'hoodie',
-  outfitColor: 'navy',
+  hairColor:   'brown',
+  outfitStyle: 'shirt',
+  outfitColor: 'white',
   pantsColor:  'jeans',
-  shoeStyle:   'sneakers',
-  shoeColor:   'white',
+  shoeStyle:   'formal',
+  shoeColor:   'black',
   capStyle:    'none',
   capColor:    'black',
   glassesStyle:'none',
   watchStyle:  'none',
-  jacketStyle: 'none',
+  jacketStyle: 'blazer',
   background:  'studio',
-  avatarName:  'My Avatar',
+  avatarName:  'ASL Presenter',
 };
 
 function findHex(arr, id) {
