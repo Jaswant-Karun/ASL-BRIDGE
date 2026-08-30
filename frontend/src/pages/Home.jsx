@@ -198,6 +198,7 @@ export default function Home({ navigate, user }) {
         <section className="integrated-animatediff-section">
           <AnimateDiffStudio
             initialText={result?.originalText || text}
+            translatedEnglish={result?.translatedEnglish || ''}
             gloss={result?.gloss || []}
             animations={result?.animations || []}
             unsupported={result?.unsupported || []}

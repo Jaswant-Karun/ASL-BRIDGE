@@ -465,6 +465,7 @@ export default function SpeechStudio() {
         <section className="integrated-animatediff-section">
           <AnimateDiffStudio
             initialText={translationResult?.originalText || ''}
+            translatedEnglish={translationResult?.translatedEnglish || ''}
             gloss={translationResult?.gloss || []}
             animations={translationResult?.animations || []}
             unsupported={translationResult?.unsupported || []}

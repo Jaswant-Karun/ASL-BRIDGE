@@ -2,6 +2,9 @@ import React from 'react';
 
 export default function LiveCaptionBanner({
   fullText = '',
+  translatedEnglish = '',
+  language = 'en',
+  languageName = 'English',
   currentWord = '',
   activeGlossToken = '',
   isSpeaking = false,
@@ -21,7 +24,9 @@ export default function LiveCaptionBanner({
             <span className={`voice-waveform ${isSpeaking ? 'active' : ''}`}>
               <span></span><span></span><span></span><span></span>
             </span>
-            {isSpeaking ? `${avatar?.name || 'Avatar'} is Speaking...` : 'Synchronized Speech & Captions'}
+            {isSpeaking
+              ? `${avatar?.name || 'Avatar'} Speaking in ${languageName || 'Selected Language'}...`
+              : `Voice Narration (${languageName || 'Selected Language'})`}
           </span>
           {activeGlossToken && (
             <span className="caption-active-token">
@@ -45,9 +50,9 @@ export default function LiveCaptionBanner({
               type="button"
               className="caption-voice-btn speak"
               onClick={onSpeakAgain}
-              title="Speak sentence with avatar voice"
+              title={`Speak sentence in ${languageName || 'selected language'}`}
             >
-              🔊 Play Voice
+              🔊 Play Voice ({languageName || 'Voice'})
             </button>
           )}
         </div>
@@ -57,7 +62,7 @@ export default function LiveCaptionBanner({
       <div className="caption-speech-box">
         <p className="caption-words-stream">
           {words.map((w, idx) => {
-            const cleanWord = w.replace(/[^a-zA-Z0-9'-]/g, '');
+            const cleanWord = w.replace(/[.,!?()[\]{}"'\\/|।]/g, '');
             const isCurrent =
               currentWord &&
               cleanWord.toLowerCase() === currentWord.toLowerCase();
@@ -72,6 +77,13 @@ export default function LiveCaptionBanner({
             );
           })}
         </p>
+
+        {translatedEnglish && translatedEnglish !== fullText && (
+          <div className="caption-english-sub" style={{ marginTop: '0.4rem', fontSize: '0.85rem', color: '#94a3b8', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.35rem' }}>
+            <span style={{ color: '#38bdf8', fontWeight: 600 }}>English Conversion: </span>
+            "{translatedEnglish}"
+          </div>
+        )}
       </div>
     </div>
   );

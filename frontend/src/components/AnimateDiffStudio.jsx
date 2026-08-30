@@ -26,6 +26,7 @@ function buildDefaultAvatars() {
 
 export default function AnimateDiffStudio({
   initialText = '',
+  translatedEnglish = '',
   gloss = [],
   animations = [],
   unsupported = [],
@@ -339,6 +340,41 @@ export default function AnimateDiffStudio({
           </button>
         </div>
       </div>
+      {/* Multilingual English Conversion Step Banner */}
+      {translatedEnglish && translatedEnglish !== activeText && (
+        <div className="multilingual-translation-banner" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(16, 185, 129, 0.12) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.3)',
+          borderRadius: '12px',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1rem',
+          gap: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+            <span style={{ fontSize: '1.4rem' }}>🌐</span>
+            <div>
+              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#38bdf8', fontWeight: 700 }}>
+                {languageName || 'Selected Language'} ➔ Converted to English First (for ASL Gestures)
+              </div>
+              <div style={{ fontSize: '1.05rem', color: '#f8fafc', fontWeight: 600, marginTop: '2px' }}>
+                "{translatedEnglish}"
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span className="telemetry-pill" style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', borderColor: '#10b981' }}>
+              🗣️ Avatar Speaking: {languageName || 'Selected Language'}
+            </span>
+            <span className="telemetry-pill" style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', borderColor: '#0ea5e9' }}>
+              🤟 3D ASL Gestures Active
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Main Studio Viewport */}
       <div className="studio-viewport-grid">
@@ -444,6 +480,9 @@ export default function AnimateDiffStudio({
           {/* Real-time Spoken Live Caption Banner Below the Avatar */}
           <LiveCaptionBanner
             fullText={activeText}
+            translatedEnglish={translatedEnglish}
+            language={language}
+            languageName={languageName}
             currentWord={currentSpokenWord}
             activeGlossToken={activeSign?.token}
             isSpeaking={isSpeaking}
